@@ -22,18 +22,18 @@ using namespace std;
 //TODO Possible Improvements:
 //TODO write metrics class
 //TODO parallize RF by copying data.frame
-//TODO can we write a RF which only uses matrix class?
+//TODO can we write a RF which only uses matrix class from Eigen?
 //TODO implement normal equation and stochastic gradient descent
 //TODO interface to python
 //TODO improve parsing
 //TODO Shouldnot we use featX==a fro categorical values?
 //TODO Saving of models
+//TODO We do not need categoricals, but ordinals!
 //TODO transform categorical variable according to class outcome,  according to friedmann, p.328
 //TODO check loss improvement per new node, -> feature importances!
-//TODO clever checking of pure nodes???
+//TODO clever checking of pure nodes?
 //TODO use header names or orig header ints as string in order to work with small ds //small dataframes with header numbers
 //TODO classes for DF and NODES necessary?
-//TODO logloss as split criterion?
 //TODO opt flags: -ffast-math -floop-optimize  -funroll-loops -march=native:-flto together with -fwhole-program -Ofast
 //TODO -fomit-frame-pointer
 
@@ -96,10 +96,11 @@ void protocol3(RandomGen rng, Parameters params) {
 	delete femaleRF;
 }
 
+//crossvalidation
 void xval(RandomGen rng, Parameters params) {
-	//iohelper->transformCSVfile("complete_mini.csv", "test.csv");
 	IOHelper *iohelper = new IOHelper;
 	DataFrame df = iohelper->readCSVfile(params.dataset.back(), params.entropy);
+	//if test (validation) set exists remove it
 	if (df.containsFeature("train") > -1) {
 		DataFrame trainDF;
 		DataFrame testDF;
@@ -120,6 +121,7 @@ void xval(RandomGen rng, Parameters params) {
 	LUtils::Xvalidation(5, df, rng, params);
 }
 
+//transforms categorical string variables into numeric ones, needs header, asumes class to be last column
 void transform(string filename) {
 	IOHelper *iohelper = new IOHelper;
 	iohelper->transformCSVfile(filename, "m" + filename);
@@ -128,6 +130,7 @@ void transform(string filename) {
 }
 
 
+//special protocoll for kaggle amazon
 void special_transform(RandomGen rng, Parameters params) {
 	int iter = params.iter;
 	IOHelper *iohelper = new IOHelper;
@@ -153,6 +156,7 @@ void special_transform(RandomGen rng, Parameters params) {
 	}
 }
 
+//special protocoll for kaggle amazon
 void protocol_special(RandomGen rng, Parameters params) {
 	int iter = params.iter;
 	IOHelper *iohelper = new IOHelper;

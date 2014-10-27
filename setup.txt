@@ -1,9 +1,9 @@
 verbose=1
 #dataset=data/mboston.csv
-#dataset=data/mp_cdk.csv
+dataset=data/mp_cdk.csv
 #dataset=data/stumble_large.csv
 #dataset=data/katritzky_n_small.csv
-dataset=data/acree_final.csv
+#dataset=data/acree_final.csv
 #dataset=data/reg_test4.csv
 #dataset=data/mcomplete_mini.csv
 #dataset=data/mcomplete_mini.csv
