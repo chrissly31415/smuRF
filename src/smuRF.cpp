@@ -129,7 +129,6 @@ void transform(string filename) {
 	df.printSummary();
 }
 
-
 //special protocoll for kaggle amazon
 void special_transform(RandomGen rng, Parameters params) {
 	int iter = params.iter;
@@ -156,65 +155,34 @@ void special_transform(RandomGen rng, Parameters params) {
 	}
 }
 
-//special protocoll for kaggle amazon
+//special protocol, needs a column with train=1,test=0 column as first column
 void protocol_special(RandomGen rng, Parameters params) {
 	int iter = params.iter;
 	IOHelper *iohelper = new IOHelper;
-	DataFrame df0 =
-			iohelper->readCSVfile(params.dataset.back()).removeColumn(0);
-	df0 = df0.removeColumn(9);
+	DataFrame df0 = iohelper->readCSVfile(params.dataset.back());
 	DataFrame trainDF;
 	DataFrame testDF;
 	df0.splitFrame(0.5, 0, testDF, trainDF);
-	Eigen::MatrixXd pall(trainDF.nrrows, iter);
-	Eigen::MatrixXd pall_test(testDF.nrrows, iter);
 
-	for (int i = 0; i < iter; i++) {
-		cout << "\n##### Blending iteration: " << i + 1 << "/" << iter
-				<< " ######" << endl;
-		DataFrame dfl;
-		if (i == -1) {
-			cout << "Skipping shuffling in iteration: " << i << endl;
-			dfl = df0;
-		} else {
-			dfl = df0.shuffleCategoricals();
+	//TRAIN
+	trainDF = trainDF.removeColumn(0);
+	trainDF.printSummary();
+	RandomForest *myRF = new RandomForest(trainDF, rng, params);
+	myRF->printInfo();
+	myRF->growForest();
+	//LOSS
+	LUtils::evaluate(myRF->dataframe, myRF->poob_all, false, 1);
+	//LUtils::aucLoss(myRF->dataframe.matrix.col(myRF->dataframe.classCol),
+	//		myRF->poob_all, true);
 
-		}
-		DataFrame trainDF;
-		DataFrame testDF;
-		dfl.splitFrame(0.5, 0, testDF, trainDF);
-		trainDF = trainDF.removeColumn(0);
-		testDF = testDF.removeColumn(0);
-
-		//TRAIN
-		trainDF.printSummary();
-		RandomForest *myRF = new RandomForest(trainDF, rng, params);
-		myRF->printInfo();
-		myRF->growForest();
-		pall.col(i) = myRF->poob_all;
-
-		//LOSS
-		LUtils::evaluate(myRF->dataframe, myRF->poob_all, false, 1);
-		LUtils::aucLoss(myRF->dataframe.matrix.col(myRF->dataframe.classCol),
-				myRF->poob_all, true);
-
-		//TEST SET
-		cout << "#TESTSET#" << endl;
-		testDF.printSummary();
-		Eigen::VectorXd ptest = myRF->predict(testDF);
-		pall_test.col(i) = ptest;
-		LUtils::evaluate(testDF, ptest, true, false);
-		delete myRF;
-	}
-
-	Eigen::VectorXd pfinal = pall.rowwise().sum() / (double) iter;
-	cout << endl << "Blending results (" << iter << " datasets):" << endl;
-	LUtils::evaluate(trainDF, pfinal, params.probability, 1);
-	LUtils::aucLoss(trainDF.matrix.col(trainDF.classCol), pfinal, true);
-	//prediction test set
-	Eigen::VectorXd pfinal_test = pall_test.rowwise().sum() / (double) iter;
-	iohelper->writePred2CSV("blending_oob.csv", trainDF, pfinal);
-	iohelper->writePred2CSV("blending_prediction.csv", testDF, pfinal_test);
+	//TEST SET
+	testDF = testDF.removeColumn(0);
+	cout << "#TESTSET#" << endl;
+	testDF.printSummary();
+	Eigen::VectorXd ptest = myRF->predict(testDF);
+	LUtils::evaluate(testDF, ptest, true, false);
+	iohelper->writePredictions('prediction.csv', ptest);
+	delete myRF;
 	delete iohelper;
 }
 
@@ -273,8 +241,8 @@ void blending(RandomGen rng, Parameters params) {
 	//prediction test set
 	Eigen::VectorXd pfinal_test = pall_test.rowwise().sum()
 			/ (double) params.dataset.size();
-	iohelper->writePred2CSV("predicted_blending.csv", testDF, LUtils::round(
-			pfinal_test));
+	iohelper->writePred2CSV("predicted_blending.csv", testDF,
+			LUtils::round(pfinal_test));
 }
 
 void showData(RandomGen rng, Parameters params, DataFrame df0) {
@@ -290,7 +258,8 @@ void simpleRF(RandomGen rng, Parameters params, DataFrame df0) {
 		for (unsigned j = 0; j < params.mtry.size(); j++) {
 			RandomForest *myRF = new RandomForest(df0, rng, params.nrtrees[i],
 					params.mtry[j], params.min_nodes, params.max_depth,
-					params.probability, params.weight,params.entropy,params.verbose);
+					params.probability, params.weight, params.entropy,
+					params.verbose);
 			myRF->printInfo();
 			myRF->growForest();
 			//TEST SET
@@ -311,14 +280,15 @@ void simpleRF(RandomGen rng, Parameters params, DataFrame df0) {
 	}
 	if (params.nrtrees.size() + params.mtry.size() > 1) {
 		printf("SUMMARY\n");
-		cout<<fixed<<setprecision(2);
+		cout << fixed << setprecision(3);
 		for (map<string, double>::const_iterator it = results.begin(); it
 				!= results.end(); ++it) {
 			if (!df0.regression) {
 				cout << it->first << " - Correctly classified: " << (1.0
 						- it->second) * 100 << "%" << endl;
 			} else {
-				cout<<setw(24) <<it->first << " RMSE: "<<setw(6) << it->second << endl;
+				cout << setw(24) << it->first << " RMSE: " << setw(6)
+						<< it->second << endl;
 			}
 		}
 		if (!df0.regression) {
@@ -378,8 +348,8 @@ void selectProtocol(RandomGen rng, Parameters params) {
 		} else if (params.protocol[i].find("tree") != std::string::npos) {
 			cout << "Decision Tree" << endl;
 			simpleTree(rng, params, df);
-		} else if (params.protocol[i].find("special") != std::string::npos) {
-			cout << "Special" << endl;
+		} else if (params.protocol[i].find("train_predict") != std::string::npos) {
+			cout << "Training&Prediction" << endl;
 			protocol_special(rng, params);
 		} else {
 			cout << "No protocol defined! Trying random forest." << endl;
