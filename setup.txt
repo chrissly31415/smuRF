@@ -24,10 +24,9 @@ loss=entropy
 probability
 #job=show
 #job=tree
-#job=xval
+job=xval
 #job=rf
-job=train_predict
-#job=special
+#job=train_predict
 #job=multitransform
 #job=blending
 #job=transform

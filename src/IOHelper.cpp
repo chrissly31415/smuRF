@@ -154,7 +154,7 @@ Parameters IOHelper::parseParameters(string filename) {
 	return params;
 }
 
-void IOHelper::writePredictions(char* filename, const Eigen::VectorXd &p) {
+void IOHelper::writePredictions(string filename, const Eigen::VectorXd &p) {
 	ofstream f;
 	f.open(filename, ios::ate);
 	for (int i = 0; i < p.size(); i++) {

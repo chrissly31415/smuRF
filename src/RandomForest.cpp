@@ -124,7 +124,7 @@ void RandomForest::growForest() {
 		for (unsigned j = 0; j < featList.size(); ++j) {
 			featList[j] = j;
 		}
-		DataFrame localFrame= dataframe;;
+		DataFrame localFrame = dataframe;
 		//sample with replacement
 		vector<int> inbagidx;
 		if (bootstrap) {
@@ -153,9 +153,8 @@ void RandomForest::growForest() {
 
 		//verbose=true;
 		if (i % 25 == 0 && verbose_level >0) {
-			cout << "tree #no:" << setw(5) << i << " tree size:" << setw(5)
+			cout << "tree #no:" << setw(5) << i << " size:" << setw(5)
 					<< myTree.tree_size << endl;
-
 			cout.flush();
 		} else if (i % 25 == 0) {
 			cout << "Tree #no: " << setw(5) << i;
@@ -179,14 +178,11 @@ void RandomForest::growForest() {
 }
 
 Eigen::VectorXd RandomForest::averageOOB(const Eigen::MatrixXd &pall) {
-	//cout<<pall;
 	Eigen::VectorXd p_local = pall.rowwise().sum();
 	int leftout = 0;
 	for (int i = 0; i < p_local.size(); ++i) {
-		//cout<<"p"<<p_local(i)<<" oobcounter:"<<oobcounter[i]<<endl;
 		if (oobcounter[i] == 0) {
 			leftout++;
-			//cout << "leftout:" << i << " p:" << p_local(i) << endl;
 		} else {
 			p_local(i) = p_local(i) / (double) oobcounter[i];
 		}

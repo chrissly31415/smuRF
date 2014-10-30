@@ -2,7 +2,7 @@
  * DataFrame.h
  *
  *  Created on: Sep 18, 2012
- *      Author: Christoph Loschen
+ *  Author: Christoph Loschen
  */
 
 #ifndef DATAFRAME_H_

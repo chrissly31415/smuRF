@@ -21,7 +21,7 @@ struct IOHelper {
 	void transformCSVfile(string infile, string outfile, bool lasty=true, bool verbose=false);
 	void expandCategoricals(string infile, string outfile, bool lasty=true);
 	void writePred2CSV(string filename,const DataFrame &df, const Eigen::VectorXd &p, bool header=true, bool truth=false);
-	void writePredictions(char* filename, const Eigen::VectorXd &p);
+	void writePredictions(string filename, const Eigen::VectorXd &p);
 	void writeDataframe2CSV(string filename,const DataFrame &df, const string separator=",", const bool header=true);
 	void writeColumns(string filename,const Eigen::VectorXd &a, const Eigen::VectorXd &b, string sep);
 	//Destruktor

@@ -345,8 +345,8 @@ struct LUtils {
 				}
 			}
 			loss = LUtils::loss_rmse2(y, p);
-			printf("RMSE: %8.3f ", loss);
-			printf("MSE : %8.3f ", pow(loss, 2));
+			printf("RMSE: %8.3f\n", loss);
+			printf("MSE : %8.3f\n", pow(loss, 2));
 			loss = LUtils::loss_corrcoeff(y, p);
 			printf("R^2 : %8.3f\n", loss);
 			loss = LUtils::loss_rmse2(y, p);

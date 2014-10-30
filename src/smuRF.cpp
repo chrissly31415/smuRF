@@ -97,9 +97,7 @@ void protocol3(RandomGen rng, Parameters params) {
 }
 
 //crossvalidation
-void xval(RandomGen rng, Parameters params) {
-	IOHelper *iohelper = new IOHelper;
-	DataFrame df = iohelper->readCSVfile(params.dataset.back(), params.entropy);
+void xval(RandomGen rng, Parameters params, DataFrame df) {
 	//if test (validation) set exists remove it
 	if (df.containsFeature("train") > -1) {
 		DataFrame trainDF;
@@ -155,9 +153,8 @@ void special_transform(RandomGen rng, Parameters params) {
 	}
 }
 
-//special protocol, needs a column with train=1,test=0 column as first column
+//training_prediction, needs a column with train=1,test=0 column as first column
 void protocol_special(RandomGen rng, Parameters params) {
-	int iter = params.iter;
 	IOHelper *iohelper = new IOHelper;
 	DataFrame df0 = iohelper->readCSVfile(params.dataset.back());
 	DataFrame trainDF;
@@ -181,7 +178,7 @@ void protocol_special(RandomGen rng, Parameters params) {
 	testDF.printSummary();
 	Eigen::VectorXd ptest = myRF->predict(testDF);
 	LUtils::evaluate(testDF, ptest, true, false);
-	iohelper->writePredictions('prediction.csv', ptest);
+	iohelper->writePredictions("prediction2.csv", ptest);
 	delete myRF;
 	delete iohelper;
 }
@@ -344,11 +341,14 @@ void selectProtocol(RandomGen rng, Parameters params) {
 			cout << "Transform dataset (categorical->numeric variables):"
 					<< params.dataset.at(0) << endl;
 			transform(params.dataset.at(0));
-
+		} else if (params.protocol[i].find("xval") != std::string::npos) {
+			cout << "xvalidation" << endl;
+			xval(rng, params, df);
 		} else if (params.protocol[i].find("tree") != std::string::npos) {
 			cout << "Decision Tree" << endl;
 			simpleTree(rng, params, df);
-		} else if (params.protocol[i].find("train_predict") != std::string::npos) {
+		} else if (params.protocol[i].find("train_predict")
+				!= std::string::npos) {
 			cout << "Training&Prediction" << endl;
 			protocol_special(rng, params);
 		} else {
