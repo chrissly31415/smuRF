@@ -14,12 +14,16 @@ Input: needs .csv file (comma separated file) as input
 Parameters & workflow: read from setup.txt which contains something like:
 
 dataset=data/mp_train.csv
+
 testset=data/mp_test.csv
-nrtrees = 200 
-mtry = 20 
+
+nrtrees = 200
+
+mtry = 20 \n
 job=train_predict
 
 
 
 
 
+
