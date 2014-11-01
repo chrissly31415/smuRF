@@ -10,4 +10,16 @@ Mainly tree based machine learning code. Current features:
 - crossvalidation
 
 Input: needs .csv file (comma separated file) as input
-Parameters: set via setup.txt 
+
+Parameters & workflow: read from setup.txt which contains something like:
+
+dataset=data/mp_train.csv
+testset=data/mp_test.csv
+nrtrees = 200 
+mtry = 20 
+job=train_predict
+
+
+
+
+
