@@ -19,7 +19,8 @@ testset=data/mp_test.csv
 
 nrtrees = 200
 
-mtry = 20 \n
+mtry = 20
+
 job=train_predict
 
 
