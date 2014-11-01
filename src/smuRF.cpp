@@ -154,15 +154,22 @@ void special_transform(RandomGen rng, Parameters params) {
 }
 
 //training_prediction, needs a column with train=1,test=0 column as first column
-void protocol_special(RandomGen rng, Parameters params) {
+void protocol_special(RandomGen rng, Parameters params, DataFrame df0) {
 	IOHelper *iohelper = new IOHelper;
-	DataFrame df0 = iohelper->readCSVfile(params.dataset.back());
 	DataFrame trainDF;
 	DataFrame testDF;
-	df0.splitFrame(0.5, 0, testDF, trainDF);
+	if (params.testset.size() == 0) {
+		df0.splitFrame(0.5, 0, testDF, trainDF);
+		trainDF = trainDF.removeColumn(0);
+		testDF = testDF.removeColumn(0);
+	} else {
+		string testsetfile = params.testset.back();
+		cout << "Loading testset:" << testsetfile << endl;
+		trainDF = df0;
+		testDF = iohelper->readCSVfile(testsetfile);
+	}
 
 	//TRAIN
-	trainDF = trainDF.removeColumn(0);
 	trainDF.printSummary();
 	RandomForest *myRF = new RandomForest(trainDF, rng, params);
 	myRF->printInfo();
@@ -173,12 +180,11 @@ void protocol_special(RandomGen rng, Parameters params) {
 	//		myRF->poob_all, true);
 
 	//TEST SET
-	testDF = testDF.removeColumn(0);
-	cout << "#TESTSET#" << endl;
+	cout << "\n#TESTSET#" << endl;
 	testDF.printSummary();
 	Eigen::VectorXd ptest = myRF->predict(testDF);
 	LUtils::evaluate(testDF, ptest, true, false);
-	iohelper->writePredictions("prediction2.csv", ptest);
+	iohelper->writePredictions("prediction.csv", ptest);
 	delete myRF;
 	delete iohelper;
 }
@@ -319,7 +325,7 @@ void selectProtocol(RandomGen rng, Parameters params) {
 	DataFrame df;
 	if (params.splitinfo.splitcolumn > -1 || params.remove.size() > 0) {
 		df = prepareDF(params);
-	} else {
+	} else  {
 		IOHelper *iohelper = new IOHelper;
 		df = iohelper->readCSVfile(params.dataset.back());
 	}
@@ -332,15 +338,6 @@ void selectProtocol(RandomGen rng, Parameters params) {
 		} else if (params.protocol[i].find("show") != std::string::npos) {
 			cout << "Show Data" << endl;
 			showData(rng, params, df);
-		} else if (params.protocol[i].find("multitransform")
-				!= std::string::npos) {
-			cout << "Multi transform dataset (categorical->numeric variables):"
-					<< params.dataset.at(0) << endl;
-			special_transform(rng, params);
-		} else if (params.protocol[i].find("transform") != std::string::npos) {
-			cout << "Transform dataset (categorical->numeric variables):"
-					<< params.dataset.at(0) << endl;
-			transform(params.dataset.at(0));
 		} else if (params.protocol[i].find("xval") != std::string::npos) {
 			cout << "xvalidation" << endl;
 			xval(rng, params, df);
@@ -348,9 +345,18 @@ void selectProtocol(RandomGen rng, Parameters params) {
 			cout << "Decision Tree" << endl;
 			simpleTree(rng, params, df);
 		} else if (params.protocol[i].find("train_predict")
+						!= std::string::npos) {
+					cout << "Training&Prediction" << endl;
+					protocol_special(rng, params, df);
+		} else if (params.protocol[i].find("transform") != std::string::npos) {
+			cout << "Transform dataset (categorical->numeric variables):"
+					<< params.dataset.at(0) << endl;
+			transform(params.dataset.at(0));
+		} else if (params.protocol[i].find("multitransform")
 				!= std::string::npos) {
-			cout << "Training&Prediction" << endl;
-			protocol_special(rng, params);
+			cout << "Multi transform dataset (categorical->numeric variables):"
+					<< params.dataset.at(0) << endl;
+			special_transform(rng, params);
 		} else {
 			cout << "No protocol defined! Trying random forest." << endl;
 			simpleRF(rng, params, df);

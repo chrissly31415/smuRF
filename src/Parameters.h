@@ -15,6 +15,7 @@ struct Split {
 
 struct Parameters {
 		vector<string> dataset;
+		vector<string> testset;
 		vector<string> protocol;
 		vector<int> mtry;
 		vector<int> nrtrees;

@@ -44,6 +44,7 @@ Parameters IOHelper::parseParameters(string filename) {
 	bool data_exists = false;
 	//keywords
 	boost::regex dataset("dataset\\s*=\\s*(.*)", boost::regex::icase);
+	boost::regex testset("testset\\s*=\\s*(.*)", boost::regex::icase);
 	boost::regex remove("remove\\s*=\\s*([0-9]{0,})", boost::regex::icase);
 	boost::regex split(
 			"split\\s*=\\s*([0-9]{1,})\\s*,\\s*(-?[0-9]{0,}\\.[0-9]{0,})",
@@ -57,7 +58,7 @@ Parameters IOHelper::parseParameters(string filename) {
 	boost::regex seed("seed\\s*=\\s*([0-9]{0,9})", boost::regex::icase);
 	boost::regex iter("iter\\s*=\\s*([0-9]{0,9})", boost::regex::icase);
 	boost::regex loss("loss\\s*=\\s*(.*)", boost::regex::icase);
-	boost::regex weight("weight1?\\s*=\\s*([0-9]{0,}\\.[0-9]{0,})",
+	boost::regex weight("class_weight\\s*=\\s*([0-9]{0,}\\.[0-9]{0,})",
 			boost::regex::icase);
 	boost::regex verbose("verbose\\s*=\\s*([0-9]{0,9})", boost::regex::icase);
 	boost::regex comment("^#");
@@ -70,6 +71,8 @@ Parameters IOHelper::parseParameters(string filename) {
 			} else if (boost::regex_search(line, matches, dataset)) {
 				params.dataset.push_back(matches[1]);
 				data_exists = true;
+			} else if (boost::regex_search(line, matches, testset)) {
+				params.testset.push_back(matches[1]);
 			} else if (boost::regex_search(line, matches, loss)) {
 				string tmp = matches[1];
 				std::transform(tmp.begin(), tmp.end(), tmp.begin(), ::tolower);
@@ -383,7 +386,7 @@ void IOHelper::transformCSVfile(string infile, string outfile, bool lasty,
 }
 
 //return by value, we can optimize it later
-DataFrame IOHelper::readCSVfile(string filename, bool entropy_loss, bool lasty) {
+DataFrame IOHelper::readCSVfile(string filename) {
 	ifstream myfile;
 	stringstream sstr;
 	bool hasHeader = true;
@@ -407,11 +410,11 @@ DataFrame IOHelper::readCSVfile(string filename, bool entropy_loss, bool lasty) 
 				//now we are creating a set for each non double column
 				if (lcount > 1 && !LUtils::checkForDouble(fields[var])
 						&& string_found == false) {
-					cout << line << endl;
+					//cout << line << endl;
 					cout << "Row:" << lcount << " Columm:" << var << " Value->"
 							<< fields[var] << "<-" << endl;
 					cout
-							<< "Warning: Dataset not mere numeric. Transformation of strings to doubles needed!"
+							<< "Warning: Dataset not mere numeric! You can transform strings to numeric values using transform job."
 							<< endl;
 					string_found = true;
 					//exit(1);

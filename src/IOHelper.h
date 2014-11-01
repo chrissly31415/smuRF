@@ -16,7 +16,7 @@ using namespace std;
 struct IOHelper {
 	IOHelper() {
 	}
-	DataFrame readCSVfile(string filename, bool entropy_loss=false, bool lasty=true );
+	DataFrame readCSVfile(string filename);
 	Parameters parseParameters(string filename);
 	void transformCSVfile(string infile, string outfile, bool lasty=true, bool verbose=false);
 	void expandCategoricals(string infile, string outfile, bool lasty=true);
@@ -27,7 +27,7 @@ struct IOHelper {
 	//Destruktor
 	~IOHelper() {
 	}
-	static DataFrame loadCSVfile(string filename, bool lasty=true);
+	//static DataFrame loadCSVfile(string filename, bool lasty=true);
 };
 
 #endif /* IOHELPER_H_ */
