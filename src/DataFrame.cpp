@@ -68,6 +68,21 @@ void DataFrame::quick_analyze() {
 	cm = cm / nrrows;
 }
 
+DataFrame DataFrame::copy() {
+	DataFrame *newDF = new DataFrame(nrrows, nrcols, classCol, regression);
+	newDF->setHeader(header);
+	newDF->setMatrix(matrix);
+	newDF->setOrder(order);
+	newDF->setType(type);
+	newDF->setDistinct(distinct);
+	if (newDF->nrrows < distinct_switch) {
+		newDF->analyze();
+	} else {
+		newDF->quick_analyze();
+	}
+	return *newDF;
+}
+
 void DataFrame::setSortOrder() {
 	for (int colnr = 0; colnr < nrcols; colnr++) {
 		Eigen::VectorXd v = matrix.col(colnr);

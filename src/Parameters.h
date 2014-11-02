@@ -31,6 +31,8 @@ struct Parameters {
 		bool entropy;
 		double weight;
 		int verbose;
+		int numjobs;
+
 	};
 
 

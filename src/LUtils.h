@@ -340,16 +340,17 @@ struct LUtils {
 		if (df.regression) {
 			if (verbose == 2) {
 				for (int i = 0; i < y.size(); ++i) {
-					cout << "T:" << y(i) << " P:" << p(i) << " SE:" << pow(y(i)
-							- p(i), 2) << endl;
+					cout << "T:" << y(i) << " P:" << p(i) << " SE:" << pow(
+							y(i) - p(i), 2) << endl;
 				}
 			}
 			loss = LUtils::loss_rmse2(y, p);
-			printf("RMSE: %8.3f\n", loss);
-			printf("MSE : %8.3f\n", pow(loss, 2));
-			loss = LUtils::loss_corrcoeff(y, p);
-			printf("R^2 : %8.3f\n", loss);
-			loss = LUtils::loss_rmse2(y, p);
+			if (verbose > 0) {
+				double rsq = LUtils::loss_corrcoeff(y, p);
+				printf("RMSE: %8.3f\n", loss);
+				printf("MSE : %8.3f\n", pow(loss, 2));
+				printf("R^2 : %8.3f\n", rsq);
+			}
 		} else {
 			//confusion matrix
 			int false_negativ = 0;
@@ -691,10 +692,10 @@ struct LUtils {
 			difusec = 1000000 + difusec;
 			//cout <<"modifying";
 		}
-		cout<<fixed<<setprecision(2);
+		cout << fixed << setprecision(2);
 		cout << endl << "RUN TIME: ";
-		cout << difsec << "." << difusec<< " sec"
-				<< " [" << difsec / 60.0 << " min]" << endl;
+		cout << difsec << "." << difusec << " sec" << " [" << difsec / 60.0
+				<< " min]" << endl;
 	}
 
 	static void Xvalidation(int k, DataFrame df, RandomGen rng,
@@ -710,11 +711,7 @@ struct LUtils {
 			vector<int> trainidx = LUtils::complement(strata.at(i), df.nrrows);
 			DataFrame trainDF = df.getRows(trainidx, true);
 			trainDF.printSummary(trainDF.classCol, true);
-			RandomForest myRF(trainDF, rng, params.nrtrees.back(),
-					params.mtry.back(), params.min_nodes);
-			//RandomForest myRF(trainDF, rng, 50);
-			myRF.min_node = params.min_nodes;
-			myRF.max_depth = params.max_depth;
+			RandomForest myRF(trainDF, rng, params);
 			//myRF->printInfo();
 			cout << "Fold " << i + 1 << ": ";
 			myRF.growForest();

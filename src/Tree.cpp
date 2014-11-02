@@ -45,7 +45,6 @@ void Tree::growTree(DataFrame &dataframe, const vector<int> &featList, const int
 	vector<int> featsubset = LUtils::sample(nrFeat ,
 					dataframe.nrcols - 1, false);
 	DataFrame::FeatureResult featResult = dataframe.findBestFeature(featsubset,entropy_loss);
-	histogram = vector<int> (dataframe.nrcols);
 	//Create a new root node
 	root->feature = featResult.opt_feat;
 	root->splitvalue = featResult.opt_split;
@@ -53,7 +52,6 @@ void Tree::growTree(DataFrame &dataframe, const vector<int> &featList, const int
 	root->nameFeature = dataframe.header.at(featResult.opt_feat);
 	root->nrsamples = dataframe.nrrows;
 	createBranch(root, dataframe, nrFeat,verbose);
-	histogram[featResult.opt_feat]++;
 }
 
 void Tree::growTree(DataFrame &dataframe,
@@ -88,7 +86,6 @@ void Tree::createBranch(boost::shared_ptr<Node> parentNode,
 			cout << "Left node: Parent node is terminal." << endl;
 		}
 		parentNode->isTerminal = true;
-		histogram[parentNode->feature]--;
 		tnodecount++;
 		return;
 	} else if (leftDF.nrrows <= min_node || parentNode->depth + 1 > max_depth
@@ -108,7 +105,6 @@ void Tree::createBranch(boost::shared_ptr<Node> parentNode,
 				featResulta.loss, parentNode->depth + 1, leftDF.header[
 						featResulta.opt_feat], leftDF.nrrows, leftDF.cm);
 		parentNode->left = left;
-		histogram[featResulta.opt_feat]++;
 		createBranch(left, leftDF, nrFeat, verbose);
 	}
 
@@ -125,7 +121,6 @@ void Tree::createBranch(boost::shared_ptr<Node> parentNode,
 			cout << "Right node: Parent node is terminal." << endl;
 		}
 		parentNode->isTerminal = true;
-		histogram[parentNode->feature]--;
 		tnodecount++;
 		return;
 	} else if (rightDF.nrrows <= min_node || parentNode->depth + 1 > max_depth
@@ -147,7 +142,6 @@ void Tree::createBranch(boost::shared_ptr<Node> parentNode,
 				featResultb.loss, parentNode->depth + 1, rightDF.header[
 						featResultb.opt_feat], rightDF.nrrows, rightDF.cm);
 		parentNode->right = right;
-		histogram[featResultb.opt_feat]++;
 		createBranch(right, rightDF, nrFeat, verbose);
 
 	}
@@ -161,13 +155,6 @@ void Tree::showTree(const bool verbose) {
 	cout << "Number of terminal nodes:" << tnodecount << endl;
 }
 
-void Tree::showFeatureFreq(const DataFrame &dataframe) {
-	for (unsigned int i = 0; i < histogram.size(); i++) {
-		cout << "Feature: " << dataframe.header[i] << " freq: " << histogram[i]
-				<< endl;
-	}
-	cout << endl;
-}
 
 //prediction for external data
 Eigen::VectorXd Tree::predict(DataFrame &testSet, const bool verbose) {

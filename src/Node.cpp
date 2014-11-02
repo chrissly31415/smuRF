@@ -16,8 +16,6 @@ Node::Node(int a, double b) :
 	nodeID = NODECOUNTER;
 	NODECOUNTER++;
 	isTerminal = false;
-
-
 }
 
 Node::Node(int a, double b, double c, int d, string e, int f, double g) :
@@ -91,14 +89,11 @@ void Node::showChildren(const bool verbose) {
 //prints children nodes concisely into string stream
 string Node::printChildren(const bool verbose) {
 	stringstream ss;
-
-
 	return ss.str();
 }
 
 
 
 Node::~Node() {
-
 }
 

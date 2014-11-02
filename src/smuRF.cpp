@@ -60,42 +60,6 @@ DataFrame prepareDF(Parameters params) {
 	return df;
 }
 
-//split up male and female
-void protocol3(RandomGen rng, Parameters params) {
-	IOHelper *iohelper = new IOHelper;
-	DataFrame df0 =
-			iohelper->readCSVfile(params.dataset.back()).removeColumn(0);
-	//split male-female
-	DataFrame maleDF;
-	DataFrame femaleDF;
-	df0.splitFrame(0.5, 2, femaleDF, maleDF);
-	//train,test male
-	DataFrame mtrainDF;
-	DataFrame mtestDF;
-	maleDF.splitFrame(0.5, 0, mtestDF, mtrainDF);
-	mtrainDF = mtrainDF.removeColumn(0);
-	mtestDF = mtestDF.removeColumn(0);
-	mtrainDF.printSummary();
-	//mtestDF.printSummary();
-	//RF
-	RandomForest *maleRF = new RandomForest(mtrainDF, rng, params);
-	maleRF->printInfo();
-	maleRF->growForest();
-	//train,test female
-	DataFrame ftrainDF;
-	DataFrame ftestDF;
-	femaleDF.splitFrame(0.5, 0, ftestDF, ftrainDF);
-	ftrainDF = ftrainDF.removeColumn(0);
-	ftestDF = ftestDF.removeColumn(0);
-	ftrainDF.printSummary();
-	//ftestDF.printSummary();
-	RandomForest *femaleRF = new RandomForest(ftrainDF, rng, params);
-	femaleRF->printInfo();
-	femaleRF->growForest();
-	delete maleRF;
-	delete femaleRF;
-}
-
 //crossvalidation
 void xval(RandomGen rng, Parameters params, DataFrame df) {
 	//if test (validation) set exists remove it
@@ -173,17 +137,18 @@ void protocol_special(RandomGen rng, Parameters params, DataFrame df0) {
 	trainDF.printSummary();
 	RandomForest *myRF = new RandomForest(trainDF, rng, params);
 	myRF->printInfo();
-	myRF->growForest();
+	myRF->growForest_parallel();
 	//LOSS
+	cout << "#Training (out-of-bag):" << endl;
 	LUtils::evaluate(myRF->dataframe, myRF->poob_all, false, 1);
 	//LUtils::aucLoss(myRF->dataframe.matrix.col(myRF->dataframe.classCol),
 	//		myRF->poob_all, true);
 
 	//TEST SET
-	cout << "\n#TESTSET#" << endl;
+	cout << "\n#Testset" << endl;
 	testDF.printSummary();
 	Eigen::VectorXd ptest = myRF->predict(testDF);
-	LUtils::evaluate(testDF, ptest, true, false);
+	LUtils::evaluate(testDF, ptest, false, 1);
 	iohelper->writePredictions("prediction.csv", ptest);
 	delete myRF;
 	delete iohelper;
@@ -259,10 +224,7 @@ void simpleRF(RandomGen rng, Parameters params, DataFrame df0) {
 	double min_loss = 10e15;
 	for (unsigned i = 0; i < params.nrtrees.size(); i++) {
 		for (unsigned j = 0; j < params.mtry.size(); j++) {
-			RandomForest *myRF = new RandomForest(df0, rng, params.nrtrees[i],
-					params.mtry[j], params.min_nodes, params.max_depth,
-					params.probability, params.weight, params.entropy,
-					params.verbose);
+			RandomForest *myRF = new RandomForest(df0, rng, params);
 			myRF->printInfo();
 			myRF->growForest();
 			//TEST SET
@@ -365,8 +327,10 @@ void selectProtocol(RandomGen rng, Parameters params) {
 }
 
 int main() {
-	cout << "### smuRF - simple & userfriendly Random Forest ###\n";
-	cout << "###	(c) Christoph Loschen, 2012-2014        ###\n";
+	cout << "##########################################################\n";
+	cout << "###  smuRF - simple multi-threaded Random Forest       ###\n";
+	cout << "###	(c) Christoph Loschen, 2012-2014               ###\n";
+	cout << "##########################################################\n";
 	timeval t1, t2;
 	gettimeofday(&t1, NULL);
 	IOHelper *iohelper = new IOHelper;

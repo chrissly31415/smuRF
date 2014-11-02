@@ -17,30 +17,29 @@ using namespace std;
 
 struct RandomForest {
 	RandomForest(DataFrame ldf, RandomGen rng, Parameters params);
-	RandomForest(DataFrame ldf, RandomGen rng, int m, bool p=false, double w=0.5, bool l=false, int v=1);
-	RandomForest(DataFrame ldf, RandomGen rng,  int m, int a, int b, int c=100, bool p=false, double w=0.5, bool l=false, int v=1);
 
 	~RandomForest();
+
 	DataFrame dataframe;
 	RandomGen rng;
-	int nrTrees;
-	int mTry;
-	int min_node;
-	int max_depth;
-	bool probability;
-	double weight;
+
+	int nrTrees,mTry,min_node,max_depth,verbose_level,probability,numjobs;
+	double weight,oob_loss;
 	bool entropy_loss;
-	int verbose_level;
+
 	vector<Tree> trees;
 	vector<int> histogram;
-	Eigen::VectorXd poob_all;
-	double oob_loss;
 	vector<int> oobcounter;
-	void growForest();
-	void growShuffledForest();
-	void printInfo();
+
+	Eigen::VectorXd poob_all;
 	Eigen::VectorXd averageOOB(const Eigen::MatrixXd &pall);
 	Eigen::VectorXd predict(DataFrame &testSet, const bool verbose = false);
+
+	void growForest();
+	void growForest_parallel();
+	void growShuffledForest();
+	void printInfo();
+
 };
 
 #endif /* RANDOMFOREST_H_ */

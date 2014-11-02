@@ -35,6 +35,7 @@ Parameters IOHelper::parseParameters(string filename) {
 	params.splitinfo.splitcolumn = -1;
 	params.splitinfo.splitvalue = 0.5;
 	params.verbose = 1;
+	params.numjobs = 1;
 
 	ifstream myfile;
 	myfile.open(filename);
@@ -52,10 +53,11 @@ Parameters IOHelper::parseParameters(string filename) {
 	boost::regex protocol("job\\s*=\\s*(.*)", boost::regex::icase);
 	boost::regex nrtrees("nrtrees\\s*=\\s*([0-9]{0,})", boost::regex::icase);
 	boost::regex min_node("min_node\\s*=\\s*([0-9]{0,})", boost::regex::icase);
-	boost::regex mtry("mtry\\s*=\\s*([0-9]{0,})", boost::regex::icase);
+	boost::regex mtry("try_features\\s*=\\s*([0-9]{0,})", boost::regex::icase);
 	boost::regex maxdepth("max_depth\\s*=\\s*([0-9]{0,})", boost::regex::icase);
 	boost::regex probability("probability", boost::regex::icase);
 	boost::regex seed("seed\\s*=\\s*([0-9]{0,9})", boost::regex::icase);
+	boost::regex numjobs("numjobs\\s*=\\s*([0-9]{0,9})", boost::regex::icase);
 	boost::regex iter("iter\\s*=\\s*([0-9]{0,9})", boost::regex::icase);
 	boost::regex loss("loss\\s*=\\s*(.*)", boost::regex::icase);
 	boost::regex weight("class_weight\\s*=\\s*([0-9]{0,}\\.[0-9]{0,})",
@@ -134,6 +136,11 @@ Parameters IOHelper::parseParameters(string filename) {
 				Str << matches[1];
 				Str >> tmpi;
 				params.seed = tmpi;
+			} else if (boost::regex_search(line, matches, numjobs)) {
+				stringstream Str;
+				Str << matches[1];
+				Str >> tmpi;
+				params.numjobs = tmpi;
 			} else if (boost::regex_search(line, matches, verbose)) {
 				stringstream Str;
 				Str << matches[1];
@@ -414,7 +421,7 @@ DataFrame IOHelper::readCSVfile(string filename) {
 					cout << "Row:" << lcount << " Columm:" << var << " Value->"
 							<< fields[var] << "<-" << endl;
 					cout
-							<< "Warning: Dataset not mere numeric! You can transform strings to numeric values using transform job."
+							<< "Warning: Dataset not mere numeric! You can transform strings to numeric values using job=transform."
 							<< endl;
 					string_found = true;
 					//exit(1);

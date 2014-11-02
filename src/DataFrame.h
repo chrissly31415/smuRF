@@ -76,6 +76,8 @@ struct DataFrame {
 
 	DataFrame renameCategoricals();
 	DataFrame shuffleCategoricals();
+	DataFrame copy();
+
 	int containsFeature(string feature);
 	void sortRowsOnColumn(int colnr);
 	void sortRowsOnClassOutcome(int colnr);
@@ -108,8 +110,9 @@ struct DataFrame {
 	double rmse_loss(const Eigen::VectorXd &v,
 				const Eigen::VectorXd &y, const double split, bool verbose = false);
 
+
 	//STATIC FUNCTIONS
-	//this is improving speed, short form
+	//this is improving speed, short form, should be in utils??
 	static inline double rmse_loss_direct(const Eigen::VectorXd &v,
 			const Eigen::VectorXd &y, const double split, bool verbose = false) {
 		int nrrows = v.size();
