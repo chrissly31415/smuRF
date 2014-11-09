@@ -71,6 +71,7 @@ Eigen::VectorXd RandomForest::predict(DataFrame &testSet, const bool verbose) {
 }
 
 //grows Forest
+//@TODO we should control random seeds for sample function (used for bootstrap and feature selection in growTree)
 void RandomForest::growForest_parallel() {
 	int nthreads = 1;
 #ifdef OMP_H

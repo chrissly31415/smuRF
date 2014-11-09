@@ -15,8 +15,8 @@
 #include <boost/make_shared.hpp>
 
 //Binary tree
-Tree::Tree(int n, bool p, bool r, double w) :
-	min_node(n), probability(p), regression(r), w1(w) {
+Tree::Tree(int n, bool p, bool r, double w, int seed) :
+	min_node(n), probability(p), regression(r), w1(w), rseed(seed) {
 	root=boost::make_shared<Node>(0, 0.0);
 	tree_size = 0;
 	max_depth = 100;

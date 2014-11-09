@@ -15,12 +15,13 @@
 using namespace std;
 
 struct Tree {
-	Tree (int n, bool p = false, bool r = false, double w=0.5);
+	Tree (int n, bool p = false, bool r = false, double w=0.5, int seed=42);
 	virtual ~Tree();
 	boost::shared_ptr<Node> root;
 	int min_node,tnodecount,tree_size,max_depth;
 	bool probability,regression,entropy_loss;
 	double w1;
+	int rseed;
 
 	void printInfo();
 	typedef struct pair<DataFrame, DataFrame> DoubleDF;
