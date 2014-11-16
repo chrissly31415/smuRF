@@ -1,8 +1,14 @@
+####general parameters####
 verbose=1
+seed =42 
 numjobs=4
-#dataset=data/mboston.csv
-dataset=data/mp_cdk.csv
+
+####dataset specific####
+dataset=data/mboston.csv
+#dataset=data/mp_cdk.csv
 #dataset=data/katritzky_n_small.csv
+#testset=data/katritzky_n_small.csv
+dataset=data/karthikeyan_mp2.csv
 #dataset=data/mp_test.csv
 #testset=data/mp_train.csv
 #dataset=data/acree_final.csv
@@ -14,25 +20,27 @@ dataset=data/mp_cdk.csv
 #dataset=mmyforest.csv
 #split=1,0.5
 #remove=1
-remove=0
+#remove=0
+
+####rf parameters####
 #iter=1
 #class_weight=0.2
-nrtrees = 200
+nrtrees = 100 
 #nrtrees = 250
-#try_features = 5
-#try_features = 10 
-try_features = 40
+try_features = 5
+try_features = 10 
 #try_features = 30 
 min_node = 5 
-max_depth = 30
-seed = 123
+max_depth = 30 
 #loss=entropy
 #probability
+
+###workflow####
 #job=show
 #job=tree
 #job=xval
-#job=rf
-job=train_predict
+job=rf
+#job=train_predict
 #job=multitransform
 #job=blending
 #job=transform

@@ -14,13 +14,14 @@
 
 struct RandomGen
 {
-	RandomGen() : rng(time(0)){};
+	RandomGen() : rng(42){};
 	RandomGen(unsigned int lseed): seed(lseed) {
 		rng.seed(seed);
 	}
 
 	void setSeed(unsigned int lseed) {
-		rng.seed(lseed);
+		seed = lseed;
+		rng.seed(seed);
 	}
 
 	int getRandomNumber(int maxExcluded) {

@@ -10,6 +10,7 @@
 
 #include "DataFrame.h"
 #include "Node.h"
+#include "RandomGen.h"
 
 
 using namespace std;
@@ -22,6 +23,7 @@ struct Tree {
 	bool probability,regression,entropy_loss;
 	double w1;
 	int rseed;
+	RandomGen rng;
 
 	void printInfo();
 	typedef struct pair<DataFrame, DataFrame> DoubleDF;

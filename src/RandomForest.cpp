@@ -91,6 +91,15 @@ void RandomForest::growForest_parallel() {
 	cout << endl;
 	Eigen::MatrixXd pall = Eigen::MatrixXd::Zero(dataframe.nrrows, nrTrees);
 
+	//seeds and out of bag indices generated outside parallel loop to warrant reproducibility
+	vector<int> tree_seeds = LUtils::sample(rng, nrTrees,
+				1000000, true);
+	vector<vector<int> > inbagindices(nrTrees);
+	for (int i = 0; i < nrTrees; i++) {
+		inbagindices[i] = LUtils::sample(rng, dataframe.nrrows,
+				dataframe.nrrows, true);
+	}
+
 #pragma omp parallel for shared(pall)
 	for (int j = 0; j < nthreads; j++) {
 		DataFrame localFrame = dataframe.copy();
@@ -103,16 +112,18 @@ void RandomForest::growForest_parallel() {
 		cout << "Starting thread: " << id << " with " << nrTrees_local << " trees\n";
 
 		for (int i = 0; i < nrTrees_local; i++) {
+			//serial index in all original trees
+			int index = id * nrTrees_local + i;
+
 			vector<int> featList(localFrame.nrcols - 1);
 			for (unsigned j = 0; j < featList.size(); ++j) {
 				featList[j] = j;
 			}
-			vector<int> inbagidx = LUtils::sample(rng, localFrame.nrrows,
-					localFrame.nrrows,
-					localFrame.matrix.col(localFrame.classCol), true);
-
+			//vector<int> inbagidx = LUtils::sample(rng, localFrame.nrrows,
+			//		localFrame.nrrows, true);
+			vector<int> inbagidx = inbagindices[index];
 			DataFrame inbagsample = localFrame.getRows(inbagidx, true);
-			Tree myTree(min_node, probability, inbagsample.regression, weight);
+			Tree myTree(min_node, probability, inbagsample.regression, weight,tree_seeds[index]);
 			myTree.max_depth = max_depth;
 			bool verbose = false;
 			myTree.growTree(inbagsample, featList, nrFeat, verbose);
@@ -123,11 +134,11 @@ void RandomForest::growForest_parallel() {
 			Eigen::VectorXd p_oob = myTree.predict(oobagsample, verbose);
 			Eigen::VectorXd p = LUtils::fillPredictions(p_oob, oobagidx,
 					localFrame.nrrows, oobcounter);
-			int lindex = id * nrTrees_local + i;
+
 #pragma omp critical
-			pall.col(lindex) = p;
+			pall.col(index) = p;
 			if (i>0 && i % 25 == 0 &&  verbose_level > 0) {
-				cout << "Thread: " << id << " iteration: " << setw(5) << i
+				cout << "THREAD::" << id << " iteration: " << setw(5) << i
 						<< " current tree size: " << setw(5) << myTree.tree_size
 						<< endl;
 			}
@@ -139,23 +150,16 @@ void RandomForest::growForest_parallel() {
 	}
 	poob_all = averageOOB(pall);
 //	cout << "Training results (out-of-bag):" << endl;
-//	oob_loss
-//			= LUtils::evaluate(dataframe, poob_all, probability, verbose_level);
+	oob_loss
+			= LUtils::evaluate(dataframe, poob_all, probability, verbose_level);
 //
 //	if (!dataframe.regression)
 //		 LUtils::aucLoss(dataframe.matrix.col(dataframe.classCol), poob_all,
 //		 true);
 }
 
-//grows Forest
+//grows Forest seriel @deprecated
 void RandomForest::growForest() {
-	//cout<<"+++++++OPENMP switched ON++++++++++++++\n";
-	//#ifdef OMP_H
-	//omp_set_num_threads(4);
-	//#pragma omp parallel
-	//cout<<"OPENMP switched ON, NUMTHREADS:"<<omp_get_num_threads()<<"\n";
-	//#endif
-
 	int nrFeat = mTry;
 	bool bootstrap = true;
 	bool verbose = false;

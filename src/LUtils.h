@@ -171,7 +171,7 @@ struct LUtils {
 		bool exists;
 		for (int i = 0; i < n; ++i) {
 			do {
-				//tmp = getRandomNumber(bound);
+				//cout<<"RNG:"<<rng.seed<<endl;
 				tmp = rng.getRandomNumber(bound);
 				if (replacement)
 					break;
@@ -188,39 +188,7 @@ struct LUtils {
 		return vec;
 	}
 
-	static double getRandomNumber(int bound) {
-		return rand() % bound;
-	}
 
-	//create indices with/without replacement, no rng object
-	//n: number of return indices, bound: upper limit of indices
-	static vector<int> sample(int n, int bound, bool replacement) {
-		if (n > bound && replacement == false) {
-			cerr
-					<< "Error: For sampling without replacement number of samples should not exceed bound."
-					<< endl;
-			exit(1);
-		}
-		vector<int> vec(n);
-		int tmp = 0;
-		bool exists;
-		for (int i = 0; i < n; ++i) {
-			do {
-				tmp = getRandomNumber(bound);
-				if (replacement)
-					break;
-				exists = false;
-				for (int j = 0; j < i; ++j) {
-					if (tmp == vec[j]) {
-						exists = true;
-						break;
-					}
-				}
-			} while (exists == true);
-			vec[i] = tmp;
-		}
-		return vec;
-	}
 
 	//gets missing indices to create out of bag sample
 	static vector<int> complement(vector<int> &inbag, int bound) {

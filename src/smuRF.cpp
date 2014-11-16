@@ -21,21 +21,19 @@ using namespace std;
 
 //TODO Possible Improvements:
 //TODO write metrics class
-//TODO parallize RF by copying data.frame
+//TODO improve predictor statistics: -> near zero variance and skewness
 //TODO can we write a RF which only uses matrix class from Eigen?
 //TODO implement normal equation and stochastic gradient descent
 //TODO interface to python
 //TODO improve parsing
-//TODO Shouldnot we use featX==a fro categorical values?
+//TODO Shouldnot we use featX==a for categorical values? -> only numerical ons
 //TODO Saving of models
-//TODO We do not need categoricals, but ordinals!
 //TODO transform categorical variable according to class outcome,  according to friedmann, p.328
 //TODO check loss improvement per new node, -> feature importances!
-//TODO clever checking of pure nodes?
 //TODO use header names or orig header ints as string in order to work with small ds //small dataframes with header numbers
-//TODO classes for DF and NODES necessary?
 //TODO opt flags: -ffast-math -floop-optimize  -funroll-loops -march=native:-flto together with -fwhole-program -Ofast
 //TODO -fomit-frame-pointer
+
 
 //split & remove features
 DataFrame prepareDF(Parameters params) {
@@ -89,32 +87,6 @@ void transform(string filename) {
 	iohelper->transformCSVfile(filename, "m" + filename);
 	DataFrame df = iohelper->readCSVfile("m" + filename);
 	df.printSummary();
-}
-
-//special protocoll for kaggle amazon
-void special_transform(RandomGen rng, Parameters params) {
-	int iter = params.iter;
-	IOHelper *iohelper = new IOHelper;
-	DataFrame df0 =
-			iohelper->readCSVfile(params.dataset.back()).removeColumn(0);
-	df0 = df0.removeColumn(9);
-	string filename = params.dataset.back();
-	for (int i = 0; i < iter; i++) {
-		cout << "\n##### Creation of shuffled data: " << i + 1 << "/" << iter
-				<< " ######" << endl;
-		string is =
-				static_cast<ostringstream*> (&(ostringstream() << i))->str();
-		string nfilename = "m" + is + "_" + filename;
-		DataFrame dfl;
-		if (i == 0) {
-			cout << "Skipping shuffling in iteration: " << i << endl;
-			dfl = df0;
-		} else {
-			dfl = df0.shuffleCategoricals();
-
-		}
-		iohelper->writeDataframe2CSV(nfilename, dfl);
-	}
 }
 
 //training_prediction, needs a column with train=1,test=0 column as first column
@@ -226,9 +198,7 @@ void simpleRF(RandomGen rng, Parameters params, DataFrame df0) {
 		for (unsigned j = 0; j < params.mtry.size(); j++) {
 			RandomForest *myRF = new RandomForest(df0, rng, params);
 			myRF->printInfo();
-			myRF->growForest();
-			//TEST SET
-			//iohelper->writePred2CSV("predicted.csv", df0, p, true, true);
+			myRF->growForest_parallel();
 			double loss = myRF->oob_loss;
 			//save results
 			stringstream info;
@@ -314,11 +284,6 @@ void selectProtocol(RandomGen rng, Parameters params) {
 			cout << "Transform dataset (categorical->numeric variables):"
 					<< params.dataset.at(0) << endl;
 			transform(params.dataset.at(0));
-		} else if (params.protocol[i].find("multitransform")
-				!= std::string::npos) {
-			cout << "Multi transform dataset (categorical->numeric variables):"
-					<< params.dataset.at(0) << endl;
-			special_transform(rng, params);
 		} else {
 			cout << "No protocol defined! Trying random forest." << endl;
 			simpleRF(rng, params, df);
@@ -327,10 +292,11 @@ void selectProtocol(RandomGen rng, Parameters params) {
 }
 
 int main() {
-	cout << "##########################################################\n";
-	cout << "###  smuRF - simple multi-threaded Random Forest       ###\n";
-	cout << "###	(c) Christoph Loschen, 2012-2014               ###\n";
-	cout << "##########################################################\n";
+	cout << "\n##########################################################\n";
+	cout << "###    smuRF - simple multithreaded Random Forest      ###\n";
+	cout << "###	                                               ###\n";
+	cout << "###	   (c) Christoph Loschen, 2012-2014            ###\n";
+	cout << "##########################################################\n\n";
 	timeval t1, t2;
 	gettimeofday(&t1, NULL);
 	IOHelper *iohelper = new IOHelper;
