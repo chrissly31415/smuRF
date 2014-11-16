@@ -8,18 +8,19 @@ Mainly tree based machine learning code. Current features:
 - classification and regression with Random Forest
 - simple dataset statistics & manipulations
 - crossvalidation
+- shared memory parallelization
 
-Input: needs .csv file (comma separated file) as input
-
-Parameters & workflow: read from setup.txt which contains something like:
+Dataset, parameters & workflow definition are read from a textfile setup.txt which may contain: 
 
 dataset=data/mp_train.csv  
 testset=data/mp_test.csv  
+njobs = 4 
 nrtrees = 200  
 mtry = 20  
-job=train_predict  
+job = train_predict  
 
-
+Then simply call the program from the command line:
+./smurf 
 
 
 
