@@ -19,7 +19,8 @@ nrtrees = 200
 mtry = 20  
 job = train_predict  
 
-Then simply call the program from the command line: 
+Then simply call the program from the command line:  
+
 ./smurf 
 
 
