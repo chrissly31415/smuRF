@@ -197,12 +197,14 @@ void simpleRF(RandomGen rng, Parameters params, DataFrame df0) {
 	for (unsigned i = 0; i < params.nrtrees.size(); i++) {
 		for (unsigned j = 0; j < params.mtry.size(); j++) {
 			RandomForest *myRF = new RandomForest(df0, rng, params);
+			myRF->nrTrees = params.nrtrees[i];
+			myRF->mTry =params.mtry[j];
 			myRF->printInfo();
 			myRF->growForest_parallel();
 			double loss = myRF->oob_loss;
 			//save results
 			stringstream info;
-			info << "ntree: " << params.nrtrees[i] << " mtry: "
+			info << "ntree: " << params.nrtrees[i] << " try_features: "
 					<< params.mtry[j];
 			const std::string& tmp = info.str();
 			results.insert(std::make_pair(tmp, loss));
@@ -292,10 +294,11 @@ void selectProtocol(RandomGen rng, Parameters params) {
 }
 
 int main() {
+	string version="1.0";
 	cout << "\n##########################################################\n";
 	cout << "###    smuRF - simple multithreaded Random Forest      ###\n";
 	cout << "###	                                               ###\n";
-	cout << "###	   (c) Christoph Loschen, 2012-2014            ###\n";
+	cout << "###    version:"<<version<<" (c)Christoph Loschen, 2012-2014   ###\n";
 	cout << "##########################################################\n\n";
 	timeval t1, t2;
 	gettimeofday(&t1, NULL);

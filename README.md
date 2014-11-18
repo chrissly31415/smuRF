@@ -14,9 +14,9 @@ Dataset, parameters & workflow definition are read from a textfile "setup.txt" w
 
 dataset=data/mp_train.csv  
 testset=data/mp_test.csv  
-njobs = 4 
-nrtrees = 200  
-mtry = 20  
+njobs = 4  
+nrtrees = 200    
+mtry = 20    
 job = train_predict  
 
 Then simply call the program from the command line:  

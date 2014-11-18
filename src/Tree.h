@@ -26,6 +26,7 @@ struct Tree {
 	RandomGen rng;
 
 	void printInfo();
+	string tree2string();
 	typedef struct pair<DataFrame, DataFrame> DoubleDF;
 	void growTree(DataFrame &dataframe,const vector<int> &featList, const int featNr,  bool verbose = false);
 	void growTree(DataFrame &dataframe, bool verbose = false);

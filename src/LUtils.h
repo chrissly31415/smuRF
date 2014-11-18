@@ -317,7 +317,7 @@ struct LUtils {
 				double rsq = LUtils::loss_corrcoeff(y, p);
 				printf("RMSE: %8.3f\n", loss);
 				printf("MSE : %8.3f\n", pow(loss, 2));
-				printf("R^2 : %8.3f\n", rsq);
+				printf("R^2 : %8.3f\n", pow(rsq,2));
 			}
 		} else {
 			//confusion matrix

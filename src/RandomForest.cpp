@@ -109,7 +109,7 @@ void RandomForest::growForest_parallel() {
 			exit(1);
 		}
 		int nrTrees_local = nrTrees / nthreads;
-		cout << "Starting thread: " << id << " with " << nrTrees_local << " trees\n";
+		cout << "THREAD::" << id << " with " << nrTrees_local << " trees started.\n";
 
 		for (int i = 0; i < nrTrees_local; i++) {
 			//serial index in all original trees
