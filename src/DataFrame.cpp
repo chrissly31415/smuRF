@@ -116,140 +116,6 @@ set<double> DataFrame::distinctValues(int column) {
 	return uniqueSet;
 }
 
-//DataFrame DataFrame::shuffleCategoricals() {
-//	cout << "Shuffling categoricals" << endl;
-//	MatrixXdcm newmat(nrrows, nrcols);
-//	vector<string> locheader(nrcols);
-//	int cat = 0;
-//	int val = 0;
-//	//define class probabilities
-//	//column 0 should indicate training data
-//	if (header[0].find("train") == std::string::npos) {
-//		cout << "First column:" << header[0] << endl;
-//		cout
-//				<< "Warning: First column should indicate training data: 1: train set 0: test set!"
-//				<< endl;
-//		exit(1);
-//	}
-//	//skip first column
-//	locheader[0] = "train";
-//	for (int j = 0; j < nrcols; j++) {
-//		cout << "Feature: " << header[j] << flush << endl;
-//		set<double> uniq = distinctValues(j);
-//		locheader[j] = header[j];
-//		//new labels
-//		vector<int> newlabels = LUtils::sample(uniq.size(), uniq.size(), false);
-//		int count = 0;
-//		for (set<double>::const_iterator it = uniq.begin(); it != uniq.end(); ++it) {
-//			cat = (int) *it;
-//			for (int k = 0; k < nrrows; k++) {
-//				//do not change train or y
-//				if (j == 0) {
-//					newmat(k, 0) = matrix(k, 0);
-//				} else if (j == classCol) {
-//					newmat(k, classCol) = matrix(k, classCol);
-//				} else {
-//					val = (int) matrix(k, j);
-//					if (cat == val) {
-//						newmat(k, j) = newlabels[count];
-//					}
-//				}
-//			}
-//			count++;
-//		}
-//	}
-//
-//	DataFrame *modDF = new DataFrame(nrrows, nrcols, classCol, regression);
-//	modDF->setHeader(locheader);
-//	modDF->setMatrix(newmat);
-//	modDF->setOrder(order);
-//	modDF->setType(type);
-//	modDF->setDistinct(distinct);
-//	modDF->quick_analyze();
-//	return *modDF;
-//
-//}
-//
-//DataFrame DataFrame::renameCategoricals() {
-//	//matrix with class probs
-//	MatrixXdcm classprops(nrrows, nrcols);
-//	vector<string> locheader(nrcols);
-//	int cat = 0;
-//	int val = 0;
-//	//define class probabilities
-//	//column 0 should indicate training data
-//	if (header[0].find("train") == std::string::npos) {
-//		cout << "First column:" << header[0] << endl;
-//		cout
-//				<< "Warning: First column should indicate training data: 1: train set 0: test set!"
-//				<< endl;
-//		exit(1);
-//	}
-//	//skip first column
-//	locheader[0] = "train";
-//	for (int j = 1; j < nrcols; j++) {
-//		if (classCol == j) {
-//			locheader[j] = header[j];
-//			continue;
-//		}
-//		set<double> uniq = distinctValues(j);
-//		locheader[j] = "p(" + header[j] + "|1)";
-//		//vector<double> prop(uniq.size());
-//		Eigen::VectorXd prop(uniq.size());
-//		int count = 0;
-//		int sum = 0;
-//		int total = 0;
-//		for (set<double>::const_iterator it = uniq.begin(); it != uniq.end(); ++it) {
-//			sum = 0;
-//			total = 0;
-//			cat = (int) *it;
-//			//cout << "cat:" << cat;
-//			for (int k = 0; k < nrrows; k++) {
-//				val = (int) matrix(k, j);
-//				if (cat == val) {
-//					//cout<<"value:"<<val<<" y:"<<matrix(k,classCol)<<endl;
-//					//skip test set
-//					if (matrix(k, 0) == 1) {
-//						sum = sum + (int) matrix(k, classCol);
-//						total++;
-//					}
-//				}
-//				//now check for y
-//			}
-//			prop(count) = sum / (double) total;
-//			//cout << " fraction 1:" << prop(count) << endl;
-//			//again, now fill class prop matrix
-//			for (int k = 0; k < nrrows; k++) {
-//				val = (int) matrix(k, j);
-//				if (cat == val) {
-//					classprops(k, j) = prop(count);
-//				}
-//			}
-//			count++;
-//		}
-//	}
-//	//re-insert training info and filling test data for -nan
-//	for (int k = 0; k < nrrows; k++) {
-//		classprops(k, 0) = matrix(k, 0);
-//		classprops(k, classCol) = matrix(k, classCol);
-//		for (int j = 1; j < nrcols; j++) {
-//			//test for -nan
-//			if (classprops(k, j) != classprops(k, j)) {
-//				classprops(k, j) = 0;
-//			}
-//		}
-//	}
-//	DataFrame *modDF = new DataFrame(nrrows, nrcols, classCol, regression);
-//	modDF->setHeader(locheader);
-//	modDF->setMatrix(classprops);
-//	modDF->setOrder(order);
-//	modDF->setType(type);
-//	modDF->setDistinct(distinct);
-//	modDF->analyze();
-//	return *modDF;
-//
-//}
-
 void DataFrame::printSummary(int j, bool single) {
 	if (single) {
 		analyze();
@@ -647,20 +513,11 @@ DataFrame::SplitResult DataFrame::findBestSplit_ktile(const int colnr,
 	double opt_loss = 0.0;
 	double opt_split = 0.0;
 	double loss = 0.0;
-	//sortRowsOnColumn(colnr);
 	Eigen::VectorXd v = matrix.col(colnr);
 	Eigen::VectorXd y = matrix.col(classcol);
 	vector<double> ktiles = getSplits(k, colnr, false);
 	double split = ktiles[0];
 	for (unsigned i = 0; i < ktiles.size(); i++) {
-		//		if (i != 0 && i + 1 != ktiles.size()) {
-		//			split = (ktiles[i] + ktiles[i+1]) / 2.0;
-		//			//cout<<" SPLIT:"<<split<<endl;
-		//		} else if (i == 0) {
-		//			continue;
-		//		} else {
-		//			break;
-		//		}
 		split = ktiles[i];
 		if (regression) {
 			loss = DataFrame::rmse_loss_direct(v, y, split, verbose);

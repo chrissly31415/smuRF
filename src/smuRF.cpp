@@ -33,6 +33,7 @@ using namespace std;
 //TODO use header names or orig header ints as string in order to work with small ds //small dataframes with header numbers
 //TODO opt flags: -ffast-math -floop-optimize  -funroll-loops -march=native:-flto together with -fwhole-program -Ofast
 //TODO -fomit-frame-pointer
+//TODO flags: -floop-optimize  -funroll-loops -march=native -fomit-frame-pointer
 
 
 //split & remove features
@@ -298,7 +299,7 @@ int main() {
 	cout << "\n##########################################################\n";
 	cout << "###    smuRF - simple multithreaded Random Forest      ###\n";
 	cout << "###	                                               ###\n";
-	cout << "###    version:"<<version<<" (c)Christoph Loschen, 2012-2014   ###\n";
+	cout << "###    version:"<<version<<" (c)Christoph Loschen, 2012-2014     ###\n";
 	cout << "##########################################################\n\n";
 	timeval t1, t2;
 	gettimeofday(&t1, NULL);
