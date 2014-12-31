@@ -26,7 +26,7 @@ remove=0
 ####rf parameters####
 #iter=1
 #class_weight=0.2
-nrtrees = 1600
+nrtrees = 400
 try_features = 30
 min_node = 5 
 max_depth = 30 

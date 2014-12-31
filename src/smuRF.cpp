@@ -26,7 +26,7 @@ using namespace std;
 //TODO implement normal equation and stochastic gradient descent
 //TODO interface to python
 //TODO improve parsing
-//TODO Shouldnot we use featX==a for categorical values? -> only numerical ons
+//TODO Should not we use featX==a for categorical values? -> only numerical ons
 //TODO Saving of models
 //TODO transform categorical variable according to class outcome,  according to friedmann, p.328
 //TODO check loss improvement per new node, -> feature importances!
