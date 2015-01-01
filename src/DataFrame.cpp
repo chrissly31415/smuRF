@@ -558,8 +558,8 @@ DataFrame::SplitResult DataFrame::findBestSplit_all(const int colnr,
 	double loss = 0.0;
 	for (std::set<double>::const_iterator it = uniqueSet.begin(); it
 			!= uniqueSet.end();) {
-		if (it != uniqueSet.end() && next(it) != uniqueSet.end()) {
-			split = (*it + *next(it)) / 2.0;
+		if (it != uniqueSet.end() && boost::next(it) != uniqueSet.end()) {
+			split = (*it + *boost::next(it)) / 2.0;
 			//cout<<" SPLIT:"<<split<<endl;
 		} else if (it == uniqueSet.begin()) {
 			++it;
@@ -573,7 +573,7 @@ DataFrame::SplitResult DataFrame::findBestSplit_all(const int colnr,
 			loss = DataFrame::gini_loss_direct(v, y, split, entropy_loss, w1,
 					verbose);
 		}
-		if (loss < opt_loss || split == *next(uniqueSet.begin())) {
+		if (loss < opt_loss || split == *boost::next(uniqueSet.begin())) {
 			//verbose=true;
 			opt_loss = loss;
 			opt_split = split;

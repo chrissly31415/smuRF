@@ -22,11 +22,9 @@
 #include "DataFrame.h"
 
 Parameters IOHelper::parseParameters(string filename) {
-	cout << "Parsing SETUP file" << endl;
+	cout << "Parsing SETUP file: " << filename << endl;
 	Parameters params;
 	//setting default
-	//params.nrtrees.push_back(100);
-	//params.mtry.push_back(5);
 	params.max_depth = 100;
 	params.min_nodes = 5;
 	params.probability = false;
@@ -37,12 +35,6 @@ Parameters IOHelper::parseParameters(string filename) {
 	params.verbose = 1;
 	params.numjobs = 1;
 
-	ifstream myfile;
-	myfile.open(filename);
-	string line;
-	int tmpi;
-	double tmpd;
-	bool data_exists = false;
 	//keywords
 	boost::regex dataset("dataset\\s*=\\s*(.*)", boost::regex::icase);
 	boost::regex testset("testset\\s*=\\s*(.*)", boost::regex::icase);
@@ -50,6 +42,7 @@ Parameters IOHelper::parseParameters(string filename) {
 	boost::regex split(
 			"split\\s*=\\s*([0-9]{1,})\\s*,\\s*(-?[0-9]{0,}\\.[0-9]{0,})",
 			boost::regex::icase);
+
 	boost::regex protocol("job\\s*=\\s*(.*)", boost::regex::icase);
 	boost::regex nrtrees("nrtrees\\s*=\\s*([0-9]{0,})", boost::regex::icase);
 	boost::regex min_node("min_node\\s*=\\s*([0-9]{0,})", boost::regex::icase);
@@ -65,9 +58,21 @@ Parameters IOHelper::parseParameters(string filename) {
 	boost::regex verbose("verbose\\s*=\\s*([0-9]{0,9})", boost::regex::icase);
 	boost::regex comment("^#");
 	boost::smatch matches;
-	if (myfile.is_open()) {
-		while (myfile.good()) {
-			getline(myfile, line);
+	cout << "Current working directory:" << LUtils::get_workdir();
+	cout.flush();
+
+	ifstream myfile;
+	myfile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+
+	string line;
+	int tmpi;
+	double tmpd;
+	bool data_exists = false;
+	try {
+		myfile.open(filename.c_str());
+		while (getline(myfile, line)) {
+		//while (myfile >> line) {
+			cout << line << endl;
 			if (boost::regex_search(line, matches, comment)) {
 				continue;
 			} else if (boost::regex_search(line, matches, dataset)) {
@@ -148,7 +153,13 @@ Parameters IOHelper::parseParameters(string filename) {
 				params.verbose = tmpi;
 			}
 		}
+	} catch (const std::ifstream::failure &e) {
+		std::cerr << "Failure opening setup.txt.";
+		std::cerr << " Current working dir: " << LUtils::get_workdir();
+		//exit(1);
 	}
+	myfile.close();
+
 	//default values
 	if (!params.mtry.size() > 0) {
 		params.mtry.push_back(5);
@@ -156,7 +167,7 @@ Parameters IOHelper::parseParameters(string filename) {
 	if (!params.nrtrees.size() > 0) {
 		params.nrtrees.push_back(500);
 	}
-	myfile.close();
+
 	if (data_exists == false) {
 		cout << "ERROR: Please specify dataset!" << endl;
 		exit(1);
@@ -166,7 +177,7 @@ Parameters IOHelper::parseParameters(string filename) {
 
 void IOHelper::writePredictions(string filename, const Eigen::VectorXd &p) {
 	ofstream f;
-	f.open(filename, ios::ate);
+	f.open(filename.c_str(), ios::ate);
 	for (int i = 0; i < p.size(); i++) {
 		f << p(i) << endl;
 	}
@@ -178,7 +189,7 @@ void IOHelper::writePred2CSV(string filename, const DataFrame &df,
 		const Eigen::VectorXd &p, bool header, bool truth) {
 	Eigen::VectorXd y = df.matrix.col(df.classCol);
 	ofstream f;
-	f.open(filename, ios::ate);
+	f.open(filename.c_str(), ios::ate);
 	if (header && truth)
 		f << "truth,predicted" << endl;
 	if (header && !truth)
@@ -197,7 +208,7 @@ void IOHelper::writeColumns(string filename, const Eigen::VectorXd &a,
 		const Eigen::VectorXd &b, string sep) {
 	int n = min(a.size(), b.size());
 	ofstream f;
-	f.open(filename, ios::ate);
+	f.open(filename.c_str(), ios::ate);
 	f << "a,b" << endl;
 	for (int i = 0; i < n; i++) {
 		f << a(i) << sep << b(i) << endl;
@@ -209,7 +220,7 @@ void IOHelper::writeColumns(string filename, const Eigen::VectorXd &a,
 void IOHelper::writeDataframe2CSV(string filename, const DataFrame &df,
 		const string separator, const bool header) {
 	ofstream f;
-	f.open(filename, ios::ate);
+	f.open(filename.c_str(), ios::ate);
 	if (header) {
 		for (int i = 0; i < df.nrcols - 1; ++i) {
 			f << df.header[i] << separator;
@@ -232,7 +243,7 @@ void IOHelper::expandCategoricals(string infile, string outfile, bool lasty) {
 	cout << endl << "###To do" << endl;
 	ifstream myfile;
 	string line;
-	myfile.open(infile);
+	myfile.open(infile.c_str());
 	if (myfile.is_open()) {
 		getline(myfile, line);
 		while (myfile.good()) {
@@ -257,7 +268,7 @@ void IOHelper::transformCSVfile(string infile, string outfile, bool lasty,
 	vector<set<string> > non_doubles;
 	vector<map<string, double> > nonDoublesMap;
 	vector<bool> isNonDoubleField;
-	myfile.open(infile);
+	myfile.open(infile.c_str());
 	if (!myfile) {
 		cout << "ERROR: Could not find file " << infile << endl;
 		exit(1);
@@ -308,8 +319,8 @@ void IOHelper::transformCSVfile(string infile, string outfile, bool lasty,
 		cout << "Transformation Legend: " << non_doubles.size()
 				<< " non-numerical fields." << endl;
 	int col = 0;
-	for (vector<set<string> >::const_iterator it = non_doubles.begin(); it
-			!= non_doubles.end(); ++it) {
+	for (vector<set<string> >::const_iterator it = non_doubles.begin();
+			it != non_doubles.end(); ++it) {
 		int unique_id = 0;
 		//contains unique categories
 		set<string> non_double = *it;
@@ -318,8 +329,8 @@ void IOHelper::transformCSVfile(string infile, string outfile, bool lasty,
 		if (verbose)
 			cout << left << setw(32) << "Category" << setw(10) << "Identifier"
 					<< endl;
-		for (set<string>::const_iterator it2 = non_double.begin(); it2
-				!= non_double.end(); ++it2) {
+		for (set<string>::const_iterator it2 = non_double.begin();
+				it2 != non_double.end(); ++it2) {
 			if (verbose)
 				cout << left << setw(max(32, (int) it2->size())) << *it2
 						<< setw(10) << unique_id << endl;
@@ -339,7 +350,7 @@ void IOHelper::transformCSVfile(string infile, string outfile, bool lasty,
 
 	//STEP 3: parse file finally, also needed in readcsv
 	DataFrame df(lcount, fields.size(), fields.size() - 1, true);
-	myfile.open(infile);
+	myfile.open(infile.c_str());
 	lcount = 0;
 	double tmp;
 	//parsing file row-wise
@@ -362,10 +373,12 @@ void IOHelper::transformCSVfile(string infile, string outfile, bool lasty,
 				if (isNonDoubleField[var]) {
 					//...find right identifier
 					for (vector<map<string, double> >::const_iterator it =
-							nonDoublesMap.begin(); it != nonDoublesMap.end(); ++it) {
+							nonDoublesMap.begin(); it != nonDoublesMap.end();
+							++it) {
 						map<string, double> local_map = *it;
 						for (map<string, double>::const_iterator it2 =
-								local_map.begin(); it2 != local_map.end(); ++it2) {
+								local_map.begin(); it2 != local_map.end();
+								++it2) {
 							if (it2->first.compare(fields[var]) == 0) {
 								tmp = it2->second;
 							}
@@ -402,7 +415,7 @@ DataFrame IOHelper::readCSVfile(string filename) {
 	int lcount = 0;
 	string line;
 	vector<string> fields;
-	myfile.open(filename);
+	myfile.open(filename.c_str());
 	if (!myfile) {
 		cout << "ERROR: Could not find file " << filename << endl;
 		exit(1);
@@ -444,7 +457,7 @@ DataFrame IOHelper::readCSVfile(string filename) {
 	DataFrame df(lcount, fields.size(), targetcol, true);
 
 	//parse file finally
-	myfile.open(filename);
+	myfile.open(filename.c_str());
 	lcount = 0;
 	double tmp;
 	//parsing file row-wise
