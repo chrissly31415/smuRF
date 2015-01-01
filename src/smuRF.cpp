@@ -5,7 +5,11 @@
  *      Author: Christoph Loschen
  */
 
+#ifdef __unix__
 #include <sys/time.h>
+
+#endif
+
 #include <iostream>
 #include <typeinfo>
 #include <map>
@@ -34,7 +38,7 @@ using namespace std;
 //TODO opt flags: -ffast-math -floop-optimize  -funroll-loops -march=native:-flto together with -fwhole-program -Ofast
 //TODO -fomit-frame-pointer
 //TODO flags: -floop-optimize  -funroll-loops -march=native -fomit-frame-pointer
-
+//TODO no open mp for MSVC express...:-(
 
 //split & remove features
 DataFrame prepareDF(Parameters params) {
@@ -301,13 +305,17 @@ int main() {
 	cout << "###	                                               ###\n";
 	cout << "###    version:"<<version<<" (c)Christoph Loschen, 2012-2014     ###\n";
 	cout << "##########################################################\n\n";
+#ifdef __unix__
 	timeval t1, t2;
 	gettimeofday(&t1, NULL);
+#endif
 	IOHelper *iohelper = new IOHelper;
 	Parameters params = iohelper->parseParameters("setup.txt");
 	static RandomGen rng(params.seed);
 	selectProtocol(rng, params);
+#ifdef __unix__
 	gettimeofday(&t2, NULL);
 	LUtils::printTiming(t1, t2);
+#endif
 	delete iohelper;
 }

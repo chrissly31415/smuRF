@@ -8,6 +8,16 @@
 #ifndef LUTILS_H_
 #define LUTILS_H_
 
+#include <stdio.h>  /* defines FILENAME_MAX */
+
+#ifdef WINDOWS
+#include <direct.h>
+#define GetCurrentDir _getcwd
+#else
+#include <unistd.h>
+#define GetCurrentDir getcwd
+#endif
+
 #include <string>
 #include <vector>
 #include <iostream>
@@ -63,12 +73,12 @@ struct LUtils {
 			}
 		}
 		if (!df.regression) {
-			cout << "Total fraction of     1: " << ones_idx.size()
-					/ (double) df.nrrows << " [" << ones_idx.size() << "/"
-					<< df.nrrows << "]" << endl;
-			cout << "Total fraction of other: " << zero_idx.size()
-					/ (double) df.nrrows << " [" << zero_idx.size() << "/"
-					<< df.nrrows << "]" << endl;
+			cout << "Total fraction of     1: "
+					<< ones_idx.size() / (double) df.nrrows << " ["
+					<< ones_idx.size() << "/" << df.nrrows << "]" << endl;
+			cout << "Total fraction of other: "
+					<< zero_idx.size() / (double) df.nrrows << " ["
+					<< zero_idx.size() << "/" << df.nrrows << "]" << endl;
 		} else {
 			cout << "Regression: Skipping strata creation." << endl;
 		}
@@ -125,8 +135,8 @@ struct LUtils {
 				if (y(i) >= low && y(i) < high && j < nrsteps - 1) {
 					hist.at(j).push_back(i);
 					//closing last intervall, gets additional 10%
-				} else if (y(i) >= low && y(i) <= high + step / 10.0 && j
-						== nrsteps - 1) {
+				} else if (y(i) >= low && y(i) <= high + step / 10.0
+						&& j == nrsteps - 1) {
 					hist.at(j).push_back(i);
 				}
 			}
@@ -187,8 +197,6 @@ struct LUtils {
 		}
 		return vec;
 	}
-
-
 
 	//gets missing indices to create out of bag sample
 	static vector<int> complement(vector<int> &inbag, int bound) {
@@ -308,8 +316,8 @@ struct LUtils {
 		if (df.regression) {
 			if (verbose == 2) {
 				for (int i = 0; i < y.size(); ++i) {
-					cout << "T:" << y(i) << " P:" << p(i) << " SE:" << pow(
-							y(i) - p(i), 2) << endl;
+					cout << "T:" << y(i) << " P:" << p(i) << " SE:"
+							<< pow(y(i) - p(i), 2) << endl;
 				}
 			}
 			loss = LUtils::loss_rmse2(y, p);
@@ -317,7 +325,7 @@ struct LUtils {
 				double rsq = LUtils::loss_corrcoeff(y, p);
 				printf("RMSE: %8.3f\n", loss);
 				printf("MSE : %8.3f\n", pow(loss, 2));
-				printf("R^2 : %8.3f\n", pow(rsq,2));
+				printf("R^2 : %8.3f\n", pow(rsq, 2));
 			}
 		} else {
 			//confusion matrix
@@ -367,20 +375,21 @@ struct LUtils {
 						<< ")" << endl;
 				cout << setw(16) << "Right positiv:" << setw(8)
 						<< right_positiv;
-				cout << setw(16) << "False positiv:" << setw(8)
-						<< false_positiv << endl;
+				cout << setw(16) << "False positiv:" << setw(8) << false_positiv
+						<< endl;
 				cout << setw(16) << "False negativ:" << setw(8)
 						<< false_negativ;
-				cout << setw(16) << "Right negativ:" << setw(8)
-						<< right_negativ << endl;
+				cout << setw(16) << "Right negativ:" << setw(8) << right_negativ
+						<< endl;
 
 			}
 			if (verbose > 1) {
 				cout << setw(28) << "Correctly classified:" << setw(5)
 						<< setprecision(2) << (1.0 - loss / y.size()) * 100.0
 						<< "% (" << y.size() - loss << ")" << endl;
-				cout << setw(28) << "Misclassification loss:" << loss
-						/ y.size() * 100.0 << "% (" << loss << ") " << endl;
+				cout << setw(28) << "Misclassification loss:"
+						<< loss / y.size() * 100.0 << "% (" << loss << ") "
+						<< endl;
 
 			}
 			loss = loss / y.size();
@@ -496,7 +505,7 @@ struct LUtils {
 			const Eigen::VectorXd &y, string sep) {
 		int n = min(x.size(), y.size());
 		ofstream f;
-		f.open(filename, ios::ate);
+		f.open(filename.c_str(), ios::ate);
 		f << "x" << sep << "y" << endl;
 		for (int i = 0; i < n; i++) {
 			f << x(i) << sep << y(i) << endl;
@@ -575,7 +584,8 @@ struct LUtils {
 		return loss / y.size();
 	}
 
-	static double loss_rmse2(const Eigen::VectorXd &y, const Eigen::VectorXd &p) {
+	static double loss_rmse2(const Eigen::VectorXd &y,
+			const Eigen::VectorXd &p) {
 		if (y.size() != p.size()) {
 			cout << "ERROR: vectors in error function of unequal length!"
 					<< endl;
@@ -617,9 +627,10 @@ struct LUtils {
 	struct column_comparer {
 		int column_num;
 		column_comparer(int c) :
-			column_num(c) {
+				column_num(c) {
 		}
-		bool operator()(const vector<double> & lhs, const vector<double> & rhs) const {
+		bool operator()(const vector<double> & lhs,
+				const vector<double> & rhs) const {
 			return lhs[column_num] < rhs[column_num];
 		}
 	};
@@ -699,6 +710,23 @@ struct LUtils {
 
 	}
 
+	static string get_workdir() {
+
+		char cCurrentPath[FILENAME_MAX];
+
+		if (!GetCurrentDir(cCurrentPath, sizeof(cCurrentPath))) {
+			//return errno;
+			cout<<"ERROR"<<endl;
+		}
+
+		cCurrentPath[sizeof(cCurrentPath) - 1] = '\0'; /* not really required */
+		//printf("The current working directory is %s", cCurrentPath);
+		return cCurrentPath;
+	}
+
+
 };
+
+
 
 #endif /* LUTILS_H_ */
