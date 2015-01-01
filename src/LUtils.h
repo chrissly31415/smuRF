@@ -10,10 +10,13 @@
 
 #include <stdio.h>  /* defines FILENAME_MAX */
 
-#ifdef WINDOWS
+#if defined(_WIN32) || defined(_WIN64)
 #include <direct.h>
+#include <windows.h>
 #define GetCurrentDir _getcwd
-#else
+#endif
+
+#ifdef __unix__
 #include <unistd.h>
 #define GetCurrentDir getcwd
 #endif
@@ -657,15 +660,12 @@ struct LUtils {
 		}
 	}
 
-	//Function prints timing
+	//Function prints timing under unix
 	static void printTiming(timeval &start, timeval &end) {
 		int difsec;
 		int difusec;
 		difsec = end.tv_sec - start.tv_sec;
 		difusec = end.tv_usec - start.tv_usec;
-		//cout << start.tv_sec << ':' << start.tv_usec << endl;
-		//cout << end.tv_sec << ':' << end.tv_usec << endl;
-		//cout <<"Simulation ended after: " << setprecision(6) << dif << " sec.";
 		if (difusec < 0) {
 			difsec--;
 			difusec = 1000000 + difusec;
@@ -675,6 +675,15 @@ struct LUtils {
 		cout << endl << "RUN TIME: ";
 		cout << difsec << "." << difusec << " sec" << " [" << difsec / 60.0
 				<< " min]" << endl;
+	}
+
+	//Function prints timing under unix
+	static void printTiming_win(LARGE_INTEGER &start, LARGE_INTEGER &end,
+			LARGE_INTEGER &frequency) {
+		double elapsedTime = (end.QuadPart - start.QuadPart) * 1.0 / frequency.QuadPart;
+		cout  << fixed << setprecision(2);
+		cout << endl <<"RUN TIME: " << elapsedTime << " sec\n";
+
 	}
 
 	static void Xvalidation(int k, DataFrame df, RandomGen rng,
@@ -716,7 +725,7 @@ struct LUtils {
 
 		if (!GetCurrentDir(cCurrentPath, sizeof(cCurrentPath))) {
 			//return errno;
-			cout<<"ERROR"<<endl;
+			cout << "ERROR" << endl;
 		}
 
 		cCurrentPath[sizeof(cCurrentPath) - 1] = '\0'; /* not really required */
@@ -724,9 +733,6 @@ struct LUtils {
 		return cCurrentPath;
 	}
 
-
 };
-
-
 
 #endif /* LUTILS_H_ */

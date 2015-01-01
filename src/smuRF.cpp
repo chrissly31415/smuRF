@@ -7,7 +7,10 @@
 
 #ifdef __unix__
 #include <sys/time.h>
+#endif
 
+#if defined( _WIN32) || defined(_WIN64)
+#include <windows.h>
 #endif
 
 #include <iostream>
@@ -49,8 +52,8 @@ DataFrame prepareDF(Parameters params) {
 	if (params.splitinfo.splitcolumn > -1) {
 		cout << "Splitting at column:" << params.splitinfo.splitcolumn
 				<< " at value:" << params.splitinfo.splitvalue << endl;
-		df.splitFrame(params.splitinfo.splitvalue,
-				params.splitinfo.splitcolumn, df0, df);
+		df.splitFrame(params.splitinfo.splitvalue, params.splitinfo.splitcolumn,
+				df0, df);
 	}
 	//2. remove columns
 	if (params.remove.size() > 0) {
@@ -133,8 +136,8 @@ void protocol_special(RandomGen rng, Parameters params, DataFrame df0) {
 
 void blending(RandomGen rng, Parameters params) {
 	IOHelper *iohelper = new IOHelper;
-	DataFrame df0 =
-			iohelper->readCSVfile(params.dataset.back()).removeColumn(0);
+	DataFrame df0 = iohelper->readCSVfile(params.dataset.back()).removeColumn(
+			0);
 	DataFrame trainDF;
 	DataFrame testDF;
 	df0.splitFrame(0.5, 0, testDF, trainDF);
@@ -203,7 +206,7 @@ void simpleRF(RandomGen rng, Parameters params, DataFrame df0) {
 		for (unsigned j = 0; j < params.mtry.size(); j++) {
 			RandomForest *myRF = new RandomForest(df0, rng, params);
 			myRF->nrTrees = params.nrtrees[i];
-			myRF->mTry =params.mtry[j];
+			myRF->mTry = params.mtry[j];
 			myRF->printInfo();
 			myRF->growForest_parallel();
 			double loss = myRF->oob_loss;
@@ -223,19 +226,19 @@ void simpleRF(RandomGen rng, Parameters params, DataFrame df0) {
 	if (params.nrtrees.size() + params.mtry.size() > 1) {
 		printf("SUMMARY\n");
 		cout << fixed << setprecision(3);
-		for (map<string, double>::const_iterator it = results.begin(); it
-				!= results.end(); ++it) {
+		for (map<string, double>::const_iterator it = results.begin();
+				it != results.end(); ++it) {
 			if (!df0.regression) {
-				cout << it->first << " - Correctly classified: " << (1.0
-						- it->second) * 100 << "%" << endl;
+				cout << it->first << " - Correctly classified: "
+						<< (1.0 - it->second) * 100 << "%" << endl;
 			} else {
 				cout << setw(24) << it->first << " RMSE: " << setw(6)
 						<< it->second << endl;
 			}
 		}
 		if (!df0.regression) {
-			cout << ">>Optimum: " << min_pos << " with loss:" << 100 * (1.0
-					- min_loss) << "%" << endl;
+			cout << ">>Optimum: " << min_pos << " with loss:"
+					<< 100 * (1.0 - min_loss) << "%" << endl;
 		} else {
 			cout << ">>Optimum: " << min_pos << " with loss:" << min_loss
 					<< endl;
@@ -264,7 +267,7 @@ void selectProtocol(RandomGen rng, Parameters params) {
 	DataFrame df;
 	if (params.splitinfo.splitcolumn > -1 || params.remove.size() > 0) {
 		df = prepareDF(params);
-	} else  {
+	} else {
 		IOHelper *iohelper = new IOHelper;
 		df = iohelper->readCSVfile(params.dataset.back());
 	}
@@ -284,9 +287,9 @@ void selectProtocol(RandomGen rng, Parameters params) {
 			cout << "Decision Tree" << endl;
 			simpleTree(rng, params, df);
 		} else if (params.protocol[i].find("train_predict")
-						!= std::string::npos) {
-					cout << "Training&Prediction" << endl;
-					protocol_special(rng, params, df);
+				!= std::string::npos) {
+			cout << "Training&Prediction" << endl;
+			protocol_special(rng, params, df);
 		} else if (params.protocol[i].find("transform") != std::string::npos) {
 			cout << "Transform dataset (categorical->numeric variables):"
 					<< params.dataset.at(0) << endl;
@@ -299,23 +302,40 @@ void selectProtocol(RandomGen rng, Parameters params) {
 }
 
 int main() {
-	string version="1.0";
+	string version = "1.0";
 	cout << "\n##########################################################\n";
 	cout << "###    smuRF - simple multithreaded Random Forest      ###\n";
 	cout << "###	                                               ###\n";
-	cout << "###    version:"<<version<<" (c)Christoph Loschen, 2012-2014     ###\n";
+	cout << "###    version:" << version
+			<< " (c)Christoph Loschen, 2012-2014     ###\n";
 	cout << "##########################################################\n\n";
 #ifdef __unix__
 	timeval t1, t2;
 	gettimeofday(&t1, NULL);
 #endif
+
+#if defined( _WIN32) || defined(_WIN64)
+	cout<<"Detecting windows machine...";
+	LARGE_INTEGER frequency;// ticks per second
+	LARGE_INTEGER t1, t2;// ticks
+	// get ticks per second
+	QueryPerformanceFrequency(&frequency);
+	// start timer
+	QueryPerformanceCounter(&t1);
+#endif
+
 	IOHelper *iohelper = new IOHelper;
 	Parameters params = iohelper->parseParameters("setup.txt");
 	static RandomGen rng(params.seed);
 	selectProtocol(rng, params);
+
 #ifdef __unix__
 	gettimeofday(&t2, NULL);
 	LUtils::printTiming(t1, t2);
+#endif
+#if defined( _WIN32) || defined(_WIN64)
+	QueryPerformanceCounter(&t2);
+	LUtils::printTiming_win(t1,t2,frequency);
 #endif
 	delete iohelper;
 }

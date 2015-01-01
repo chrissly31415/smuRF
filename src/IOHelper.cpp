@@ -58,8 +58,6 @@ Parameters IOHelper::parseParameters(string filename) {
 	boost::regex verbose("verbose\\s*=\\s*([0-9]{0,9})", boost::regex::icase);
 	boost::regex comment("^#");
 	boost::smatch matches;
-	cout << "Current working directory:" << LUtils::get_workdir();
-	cout.flush();
 
 	ifstream myfile;
 	myfile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
@@ -154,8 +152,8 @@ Parameters IOHelper::parseParameters(string filename) {
 			}
 		}
 	} catch (const std::ifstream::failure &e) {
-		std::cerr << "Failure opening setup.txt.";
-		std::cerr << " Current working dir: " << LUtils::get_workdir();
+		//std::cerr << "Failure opening setup.txt.";
+		std::cout << " Current working dir: " << LUtils::get_workdir();
 		//exit(1);
 	}
 	myfile.close();
