@@ -4,8 +4,8 @@ smuRF
 simple multi-threaded Random Forest (smuRF)
 
 Mainly tree based machine learning code. Current features:
-- prediction with classification and regression tree (CART)
-- classification and regression with Random Forest
+- classification and regression tree (CART)
+- bagging of classification and regression trees (Random Forest)
 - simple dataset statistics & manipulations
 - crossvalidation
 - shared memory parallelization
@@ -18,6 +18,8 @@ njobs = 4
 nrtrees = 200    
 mtry = 20    
 job = train_predict  
+
+Save "setup.txt" to location of the binary.  
 
 Then simply call the program from the command line:  
 

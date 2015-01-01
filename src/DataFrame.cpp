@@ -9,10 +9,12 @@
 #include <algorithm>
 #include <vector>
 #include <set>
+#include <iterator>
 #include <string>
 #include <iostream>
 #include <iomanip>
 #include <utility>
+
 #include "LUtils.h"
 
 using namespace std;
@@ -90,7 +92,7 @@ void DataFrame::setSortOrder() {
 		VecPairDoubInt vec(nrrows);
 		//we make the pair to keep track of sorted indices
 		for (int i = 0; i < nrrows; i++) {
-			vec[i] = make_pair(v(i), i);
+			vec[i] = std::make_pair(v(i), i);
 		}
 		sort(vec.begin(), vec.end(), LUtils::pairComparator);
 		int oldidx = 0;
@@ -406,7 +408,7 @@ void DataFrame::sortRowsOnColumn(int colnr) {
 	VecPairDoubInt vec(nrrows);
 	//we make the pair to keep track of sorted indices
 	for (int i = 0; i < nrrows; i++) {
-		vec[i] = make_pair(v(i), i);
+		vec[i] = std::make_pair(v(i), i);
 	}
 	sort(vec.begin(), vec.end(), LUtils::pairComparator);
 	int oldidx = 0;
@@ -558,8 +560,8 @@ DataFrame::SplitResult DataFrame::findBestSplit_all(const int colnr,
 	double loss = 0.0;
 	for (std::set<double>::const_iterator it = uniqueSet.begin(); it
 			!= uniqueSet.end();) {
-		if (it != uniqueSet.end() && boost::next(it) != uniqueSet.end()) {
-			split = (*it + *boost::next(it)) / 2.0;
+		if (it != uniqueSet.end() && std::next(it) != uniqueSet.end()) {
+			split = (*it + *next(it)) / 2.0;
 			//cout<<" SPLIT:"<<split<<endl;
 		} else if (it == uniqueSet.begin()) {
 			++it;
