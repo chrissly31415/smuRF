@@ -517,46 +517,84 @@ struct LUtils {
 
 	}
 
-	//entropy loss
-	static double entropy_loss(const Eigen::VectorXd &y,
-			const Eigen::VectorXd &p, bool verbose) {
-		int n = p.size();
-		if (y.size() != n) {
-			cout << "ERROR: vectors in error function of unequal length!"
-					<< endl;
-			exit(1);
-		}
-		double p0 = 0.0, p1 = 0.0;
-		int c0 = 0, c1 = 0, ptemp = 0, ytemp = 0;
-		double entropy = 0.0;
-		for (int i = 0; i < n; i++) {
-			ptemp = round(p(i));
-			ytemp = round(y(i));
-			//class = 0
-			if (ptemp == 0 && ytemp == 0) {
-				p0 = p0 + 1.0;
-			}
-			//class = 1
-			if (ptemp == 1 && ytemp == 1) {
-				p1 = p1 + 1.0;
-			}
-			if (ptemp == 0) {
-				c0++;
+	//STATIC FUNCTIONS
+	//this is improving speed, short form
+	static inline double rmse_loss_direct(const Eigen::VectorXd &v,
+			const Eigen::VectorXd &y, const double split,
+			bool verbose = false) {
+		int nrrows = v.size();
+		int splitindex = 0;
+		double se_left = 0.0;
+		double se_right = 0.0;
+		//do only one loop for sum of squares and average
+		for (int i = 0; i < nrrows; ++i) {
+			if (v(i) < split) {
+				se_left = se_left + y(i);
+				splitindex++;
 			} else {
-				c1++;
+				se_right = se_right + y(i);
 			}
 		}
-		if (c0 > 0) {
-			p0 = p0 / (double) c0;
+
+		if (splitindex > 0) {
+			se_left = (pow(se_left, 2) / (double) splitindex);
 		}
-		if (c1 > 0) {
-			p1 = p1 / (double) c1;
+		if ((nrrows - splitindex) > 0) {
+			se_right = (pow(se_right, 2) / (double) (nrrows - splitindex));
 		}
-		double w0 = c0 / (double) (n);
-		double w1 = c1 / (double) (n);
-		entropy = -1.0
-				* (p0 * log(p0 + 1e-15) * w0 + p1 * log(p1 + 1e-15) * w1);
-		return entropy;
+		return -1.0 / nrrows * (se_left + se_right);
+	}
+
+	//improving speed by inlining
+	static inline double gini_loss_direct(const Eigen::VectorXd &v,
+			const Eigen::VectorXd &y, const double split, bool entropy = true,
+			double w1 = 0.5, bool verbose = false) {
+		double w0 = 1.0 - w1;
+		int nrrows = v.size();
+		int splitindex = 0;
+		double ysplit = 0.5;
+		double pa0 = 0.0, pa1 = 0.0, pb0 = 0.0, pb1 = 0.0;
+		//create predict vectors, GET UNSORTED VECTOR
+		for (int i = 0; i < nrrows; ++i) {
+			//left side
+			if (v(i) < split) {
+				//assign 0
+				if (y(i) < ysplit) {
+					pa0 = pa0 + 1.0;
+					//assign 1
+				} else {
+					pa1 = pa1 + 1.0;
+				}
+				splitindex++;
+				//right side, v(i)>=split
+			} else {
+				//assign 0
+				if (y(i) < ysplit) {
+					pb0 = pb0 + 1.0;
+					//assign 1
+				} else {
+					pb1 = pb1 + 1.0;
+				}
+			}
+		}
+		if (splitindex > 0) {
+			pa0 = w0 * pa0 / splitindex;
+			pa1 = w1 * pa1 / splitindex;
+		}
+		if ((nrrows - splitindex) > 0) {
+			pb0 = w0 * pb0 / (nrrows - splitindex);
+			pb1 = w1 * pb1 / (nrrows - splitindex);
+		}
+		double wa = splitindex / (double) (nrrows);
+		double loss = 0.0;
+		if (!entropy) {
+			loss = pa0 * (1 - pa0) * wa + pb1 * (1 - pb1) * (1.0 - wa);
+		} else {
+			//entropy
+			loss = -pa0 * log(pa0 + 1.0E-15) * wa
+					- pb0 * log(pb0 + 1.0E-15) * (1.0 - wa);
+		}
+		return loss;
 	}
 
 	//misclassification loss
@@ -596,9 +634,6 @@ struct LUtils {
 		}
 		double loss = 0.0;
 		for (int i = 0; i < y.size(); ++i) {
-
-			//	cout << "p(" << i << "): " << p(i) << " " << "y(" << i << "): "<< y(i) << endl;
-
 			loss = loss + pow((y(i) - p(i)), 2);
 
 		}
@@ -678,13 +713,15 @@ struct LUtils {
 	}
 
 	//Function prints timing under unix
+#if defined( _WIN32) || defined(_WIN64)
 	static void printTiming_win(LARGE_INTEGER &start, LARGE_INTEGER &end,
 			LARGE_INTEGER &frequency) {
 		double elapsedTime = (end.QuadPart - start.QuadPart) * 1.0 / frequency.QuadPart;
-		cout  << fixed << setprecision(2);
+		cout << fixed << setprecision(2);
 		cout << endl <<"RUN TIME: " << elapsedTime << " sec\n";
 
 	}
+#endif
 
 	static void Xvalidation(int k, DataFrame df, RandomGen rng,
 			Parameters params) {
@@ -702,7 +739,7 @@ struct LUtils {
 			RandomForest myRF(trainDF, rng, params);
 			//myRF->printInfo();
 			cout << "Fold " << i + 1 << ": ";
-			myRF.growForest();
+			myRF.train();
 			Eigen::VectorXd p = myRF.predict(testDF);
 			testDF.printSummary(testDF.classCol, true);
 			loss = loss + LUtils::evaluate(testDF, p, false, false);

@@ -69,8 +69,6 @@ Parameters IOHelper::parseParameters(string filename) {
 	try {
 		myfile.open(filename.c_str());
 		while (getline(myfile, line)) {
-		//while (myfile >> line) {
-			cout << line << endl;
 			if (boost::regex_search(line, matches, comment)) {
 				continue;
 			} else if (boost::regex_search(line, matches, dataset)) {
@@ -153,7 +151,7 @@ Parameters IOHelper::parseParameters(string filename) {
 		}
 	} catch (const std::ifstream::failure &e) {
 		//std::cerr << "Failure opening setup.txt.";
-		std::cout << " Current working dir: " << LUtils::get_workdir();
+		std::cout << "Searching for setup.txt in directory: " << LUtils::get_workdir();
 		//exit(1);
 	}
 	myfile.close();

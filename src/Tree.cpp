@@ -38,12 +38,14 @@ void Tree::printInfo() {
 	cout << " - Minimum node size: " << min_node << endl;
 }
 
+//in future use interface mlmodel
+//void Tree::train(const Eigen::MatrixXd &X, const Eigen::VectorXd &y, const bool verbose){};
+//Eigen::VectorXd Tree::predict(const Eigen::MatrixXd &Xtest, const bool verbose){};
+
 // creates recursively the tree, uses subset of features
-void Tree::growTree(DataFrame &dataframe, const vector<int> &featList,
+void Tree::train(DataFrame &dataframe, const vector<int> &featList,
 		const int nrFeat, const bool verbose) {
 	//select features randomly
-	//vector<int> featsubset = LUtils::sample(nrFeat ,
-	//				dataframe.nrcols - 1, false);
 	vector<int> featsubset = LUtils::sample(rng, nrFeat, dataframe.nrcols - 1,
 			false);
 	DataFrame::FeatureResult featResult = dataframe.findBestFeature(featsubset,
@@ -57,12 +59,12 @@ void Tree::growTree(DataFrame &dataframe, const vector<int> &featList,
 	createBranch(root, dataframe, nrFeat, verbose);
 }
 
-void Tree::growTree(DataFrame &dataframe, const bool verbose) {
+void Tree::train(DataFrame &dataframe, const bool verbose) {
 	vector<int> featList(dataframe.nrcols - 1);
 	for (unsigned i = 0; i < featList.size(); ++i) {
 		featList[i] = i;
 	}
-	growTree(dataframe, featList, featList.size(), verbose);
+	train(dataframe, featList, featList.size(), verbose);
 }
 
 //recursively insert nodes
@@ -107,7 +109,6 @@ void Tree::createBranch(boost::shared_ptr<Node> parentNode, DataFrame &dfsplit,
 			|| leftDF.distinct[leftDF.classCol] < 2) {
 		if (verbose)
 			cout << "Terminal node, cm: " << leftDF.cm << endl;
-		//Node *left = new Node(parentNode.depth + 1, leftDF.cm);
 		boost::shared_ptr<Node> left = boost::make_shared<Node>(
 				parentNode->depth + 1, leftDF.cm);
 		left->isTerminal = true;
@@ -173,15 +174,18 @@ void Tree::createBranch(boost::shared_ptr<Node> parentNode, DataFrame &dfsplit,
 
 void Tree::showTree(const bool verbose) {
 	cout << endl << "###Printing Tree Structure..." << endl;
-	root->showChildren(verbose);
+	//root->showChildren(verbose);
+	root->showChildren_formatR();
 	cout << "Number of terminal nodes:" << tnodecount << endl;
+}
+
+string Tree::tree2string() {
+
+	return "";
 }
 
 //prediction for external data
 Eigen::VectorXd Tree::predict(DataFrame &testSet, const bool verbose) {
-	//cout<<"Tree:predict"<<endl;
-	//testSet.printData();
-	//cout<<"left"<<flush;
 	//starting at root level, then call makePredictions recursively
 	double pi = 0.0;
 	Eigen::VectorXd p(testSet.nrrows);
@@ -248,10 +252,4 @@ double Tree::makePrediction(const DataFrame &testset,
 }
 
 Tree::~Tree() {
-	//cout<<"###Deleting tree:"<<flush<<endl;
-	//cerr<<"ROOT:"<<root->NODECOUNTER<<endl;
-	//root->showChildren();
-	//delete root->left;
-	//delete root->right;
-	//delete root;
 }

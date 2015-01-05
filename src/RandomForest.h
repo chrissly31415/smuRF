@@ -8,6 +8,7 @@
 #ifndef RANDOMFOREST_H_
 #define RANDOMFOREST_H_
 
+#include "MLModel.h"
 #include "DataFrame.h"
 #include "Tree.h"
 #include "RandomGen.h"
@@ -28,17 +29,17 @@ struct RandomForest {
 	bool entropy_loss;
 
 	vector<Tree> trees;
-	vector<int> histogram;
 	vector<int> oobcounter;
 
 	Eigen::VectorXd poob_all;
-	Eigen::VectorXd averageOOB(const Eigen::MatrixXd &pall);
-	Eigen::VectorXd predict(DataFrame &testSet, const bool verbose = false);
 
-	void growForest();
-	void growForest_parallel();
-	void growShuffledForest();
+	Eigen::VectorXd averageOOB(const Eigen::MatrixXd &pall);
+
+	Eigen::VectorXd predict(DataFrame &testSet, const bool verbose = false);
+	void train();
 	void printInfo();
+
+
 
 };
 

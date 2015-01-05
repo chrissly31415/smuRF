@@ -85,28 +85,6 @@ DataFrame DataFrame::copy() {
 	return *newDF;
 }
 
-void DataFrame::setSortOrder() {
-	for (int colnr = 0; colnr < nrcols; colnr++) {
-		Eigen::VectorXd v = matrix.col(colnr);
-		//we need a vector of pairs
-		VecPairDoubInt vec(nrrows);
-		//we make the pair to keep track of sorted indices
-		for (int i = 0; i < nrrows; i++) {
-			vec[i] = std::make_pair(v(i), i);
-		}
-		sort(vec.begin(), vec.end(), LUtils::pairComparator);
-		int oldidx = 0;
-		vector<int> tmpidx = order;
-		MatrixXdcm tmp = matrix;
-		for (int i = 0; i < nrrows; i++) {
-			oldidx = vec[i].second;
-			//save new order in temporary vector
-			matrix.row(i) = tmp.row(oldidx);
-			order[i] = tmpidx[oldidx];
-		}
-		printData();
-	}
-}
 
 int DataFrame::nrDistinctValues(int column) {
 	return distinctValues(column).size();
@@ -151,7 +129,6 @@ void DataFrame::printSummary(int j, bool single) {
 	}
 	double avg = sum / nrrows;
 	cout << setw(10) << avg;
-	//quick fix
 	vector<double> v = LUtils::getColumn(matrix, j);
 	double stdev = LUtils::calcStdev(v);
 	cout << setw(10) << stdev;
@@ -176,12 +153,7 @@ void DataFrame::printSummary() {
 }
 
 vector<double> DataFrame::getSplits(int k, int colnr, bool sort) {
-	vector<double> ktile = DataFrame::getKTile(k, colnr, sort);
-	//get max & min as well
-	//Eigen::VectorXd v = matrix.col(colnr);
-	//ktile.push_back(v.maxCoeff());
-	//ktile.push_back(v.minCoeff());
-	return ktile;
+	return DataFrame::getKTile(k, colnr, sort);
 }
 
 int DataFrame::containsFeature(string feat) {
@@ -237,7 +209,7 @@ void DataFrame::setDistinct(const vector<int> &distinct) {
 	this->distinct = distinct;
 }
 
-//splits dataframe by changing function arguments
+//splits dataframe via function arguments, somewhat time consuming???
 void DataFrame::splitFrame(double split, int colnr, DataFrame &dfa,
 		DataFrame &dfb) {
 	//first determine matrix sizes
@@ -434,11 +406,6 @@ void DataFrame::restoreOrder() {
 	}
 	matrix = tmp;
 	order = tmporder;
-	//	for (int i = 0; i < nrrows; i++) {
-	//		matrix.row(i) = tmp.row(i);
-	//		order[i] = i;
-	//	}
-
 }
 
 void DataFrame::setMatrix(const MatrixXdcm &matrix) {
@@ -448,21 +415,19 @@ void DataFrame::setMatrix(const MatrixXdcm &matrix) {
 //finds best feature
 DataFrame::FeatureResult DataFrame::findBestFeature(
 		const vector<int> &featList, const bool entropy_loss, double w1) {
+
 	SplitResult best;
+
 	int colnr = 0;
-	double opt_loss = 0.0;
-	double opt_split = 0.0;
-	vector<double> loss;
-	vector<string> feats;
 	int opt_feat = 0;
 	int distValues = 0;
-	int ties = 0;
-	bool skipped = true;
-	//cout<<"Findbestfeature:"<<endl;
+
+	double opt_loss = 0.0;
+	double opt_split = 0.0;
+
+
 	for (unsigned i = 0; i < featList.size(); ++i) {
 		colnr = featList[i];
-		feats.push_back(header[colnr]);
-		//cout<<"Feature: "<<header[colnr]<<endl;
 		if (colnr == classCol) {
 			continue;
 		}
@@ -476,28 +441,19 @@ DataFrame::FeatureResult DataFrame::findBestFeature(
 			best.second = 0.0;
 
 		} else if (distValues > factorlimit) {
-			best = findBestSplit_ktile(colnr, min(DataFrame::ktile_nr, nrrows),
+			int tmp = ktilenr;
+			best = findBestSplit_ktile(colnr, min(tmp, nrrows),
 					entropy_loss, w1);
-			skipped = false;
 		} else {
 			best = findBestSplit_all(colnr, entropy_loss, w1);
-			skipped = false;
 		}
 
-		loss.push_back(best.second);
 		if (best.second <= opt_loss || i == 0) {
 			opt_loss = best.second;
 			opt_feat = colnr;
 			opt_split = best.first;
 		}
-		if (best.second == opt_loss) {
-			ties++;
-		}
 
-	}
-	if (skipped == true) {
-		//cout<<"No distinct values in variable: "<< header[colnr]<<" ..."<<endl;
-		//exit(1);
 	}
 
 	FeatureResult retValue;
@@ -512,19 +468,18 @@ DataFrame::SplitResult DataFrame::findBestSplit_ktile(const int colnr,
 		const int k, const bool entropy_loss, double w1, bool verbose) {
 	int classcol = classCol;
 	//try different splits
-	double opt_loss = 0.0;
-	double opt_split = 0.0;
-	double loss = 0.0;
+	double split,loss, opt_loss,opt_split;
+
 	Eigen::VectorXd v = matrix.col(colnr);
 	Eigen::VectorXd y = matrix.col(classcol);
 	vector<double> ktiles = getSplits(k, colnr, false);
-	double split = ktiles[0];
-	for (unsigned i = 0; i < ktiles.size(); i++) {
+
+	for (int i = 0; i < k; i++) {
 		split = ktiles[i];
 		if (regression) {
-			loss = DataFrame::rmse_loss_direct(v, y, split, verbose);
+			loss = LUtils::rmse_loss_direct(v, y, split, verbose);
 		} else {
-			loss = DataFrame::gini_loss_direct(v, y, split, entropy_loss, w1,
+			loss = LUtils::gini_loss_direct(v, y, split, entropy_loss, w1,
 					verbose);
 		}
 		if (i < 1) {
@@ -560,8 +515,8 @@ DataFrame::SplitResult DataFrame::findBestSplit_all(const int colnr,
 	double loss = 0.0;
 	for (std::set<double>::const_iterator it = uniqueSet.begin(); it
 			!= uniqueSet.end();) {
-		if (it != uniqueSet.end() && std::next(it) != uniqueSet.end()) {
-			split = (*it + *next(it)) / 2.0;
+		if (it != uniqueSet.end() && next(it) != uniqueSet.end()) {
+			split = (*it + *std::next(it)) / 2.0;
 			//cout<<" SPLIT:"<<split<<endl;
 		} else if (it == uniqueSet.begin()) {
 			++it;
@@ -570,12 +525,12 @@ DataFrame::SplitResult DataFrame::findBestSplit_all(const int colnr,
 			break;
 		}
 		if (regression) {
-			loss = DataFrame::rmse_loss_direct(v, y, split, verbose);
+			loss = LUtils::rmse_loss_direct(v, y, split, verbose);
 		} else {
-			loss = DataFrame::gini_loss_direct(v, y, split, entropy_loss, w1,
+			loss = LUtils::gini_loss_direct(v, y, split, entropy_loss, w1,
 					verbose);
 		}
-		if (loss < opt_loss || split == *boost::next(uniqueSet.begin())) {
+		if (loss < opt_loss || split == *next(uniqueSet.begin())) {
 			//verbose=true;
 			opt_loss = loss;
 			opt_split = split;

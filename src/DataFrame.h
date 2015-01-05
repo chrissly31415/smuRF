@@ -40,7 +40,7 @@ struct DataFrame {
 	//determines overall speed because it decides to  switch for split value search from a ktile subset -> to all features
 	static const int factorlimit = 2;
 	//how many qtiles to get
-	static const int ktile_nr = 12;
+	static const int ktilenr = 12;
 	//when to recompute distinct values
 	static const int distinct_switch = 50;
 	//Constructor
@@ -84,7 +84,6 @@ struct DataFrame {
 
 	void restoreOrder();
 
-	typedef struct pair<DataFrame, DataFrame> DoubleDF;
 	void splitFrame(double split, int colnr, DataFrame &dfa, DataFrame &dfb);
 
 	vector<double> getKTile(int k, int colnr, bool sort = false);
@@ -106,89 +105,6 @@ struct DataFrame {
 			bool verbose = false);
 	Eigen::VectorXd class_prop(const int colnr, const int ynr,
 			const double split, bool verbose = false);
-
-	double rmse_loss(const Eigen::VectorXd &v,
-				const Eigen::VectorXd &y, const double split, bool verbose = false);
-
-
-	//STATIC FUNCTIONS
-	//this is improving speed, short form, should be in utils??
-	static inline double rmse_loss_direct(const Eigen::VectorXd &v,
-			const Eigen::VectorXd &y, const double split, bool verbose = false) {
-		int nrrows = v.size();
-		int splitindex = 0;
-		double se_left = 0.0;
-		double se_right = 0.0;
-		//do only one loop for sum of sqaures and average
-		for (int i = 0; i < nrrows; ++i) {
-			if (v(i) < split) {
-				se_left = se_left + y(i);
-				splitindex++;
-			} else {
-				se_right = se_right + y(i);
-			}
-		}
-
-		if (splitindex > 0) {
-			se_left = (pow(se_left,2) / (double) splitindex);
-		}
-		if ((nrrows - splitindex) > 0) {
-			se_right = (pow(se_right,2) / (double) (nrrows-splitindex));
-		}
-		return  -1.0/nrrows*(se_left + se_right);
-	}
-
-	//improving speed by inlining
-	static inline double gini_loss_direct(const Eigen::VectorXd &v,
-			const Eigen::VectorXd &y, const double split, bool entropy = true, double w1=0.5,
-			bool verbose = false) {
-		double  w0=1.0-w1;
-		int nrrows = v.size();
-		int splitindex = 0;
-		double ysplit = 0.5;
-		double pa0 = 0.0, pa1 = 0.0, pb0 = 0.0, pb1 = 0.0;
-		//create predict vectors, GET UNSORTED VECTOR
-		for (int i = 0; i < nrrows; ++i) {
-			//left side
-			if (v(i) < split) {
-				//assign 0
-				if (y(i) < ysplit) {
-					pa0 = pa0 + 1.0;
-					//assign 1
-				} else {
-					pa1 = pa1 + 1.0;
-				}
-				splitindex++;
-			//right side, v(i)>=split
-			} else {
-				//assign 0
-				if (y(i) < ysplit) {
-					pb0 = pb0 + 1.0;
-					//assign 1
-				} else {
-					pb1 = pb1 + 1.0;
-				}
-			}
-		}
-		if (splitindex > 0) {
-			pa0 = w0* pa0 / splitindex;
-			pa1 = w1* pa1 / splitindex;
-		}
-		if ((nrrows - splitindex) > 0) {
-			pb0 = w0* pb0 / (nrrows - splitindex);
-			pb1 = w1* pb1 / (nrrows - splitindex);
-		}
-		double wa = splitindex / (double) (nrrows);
-		double loss = 0.0;
-		if (!entropy) {
-			loss = pa0 * (1 - pa0) * wa + pb1 * (1 - pb1) * (1.0 - wa);
-		} else {
-			//entropy
-			loss = -pa0 * log(pa0 + 1.0E-15) * wa - pb0 * log(pb0 + 1.0E-15)
-					* (1.0 - wa);
-		}
-		return loss;
-	}
 
 };
 

@@ -34,6 +34,7 @@ struct Node {
 	bool isTerminal;
 	void createChildren(int maxdepth, bool verbose=false);
 	void showChildren(const bool verbose=false);
+	void showChildren_formatR(const bool verbose=false);
 	string printChildren(const bool verbose=false);
 	//should be tree variable...
 	static int NODECOUNTER;

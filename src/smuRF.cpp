@@ -18,6 +18,7 @@
 #include <map>
 #include <sstream>
 #include "RandomForest.h"
+#include "OnlineSGD.h"
 #include "Tree.h"
 #include "IOHelper.h"
 #include "LUtils.h"
@@ -25,6 +26,9 @@
 #include "Parameters.h"
 
 using namespace std;
+
+//compiling with gcc: -std=c++0x -I/home/loschen/programs/boost_1_57_0/boost -I/usr/include/eigen3 -O2 -Wall -static -c -fmessage-length=0 -fopenmp -pthread -floop-optimize  -funroll-loops -march=native -fomit-frame-pointer
+//linking with gcc: g++ -L/usr/local/lib -static -pthread -o "smuRF"  ./DataFrame.o ./IOHelper.o ./Node.o ./RandomForest.o ./Tree.o ./smuRF.o  -lboost_regex -lgomp
 
 //TODO Possible Improvements:
 //TODO write metrics class
@@ -42,6 +46,7 @@ using namespace std;
 //TODO -fomit-frame-pointer
 //TODO flags: -floop-optimize  -funroll-loops -march=native -fomit-frame-pointer
 //TODO no open mp for MSVC express...:-(
+
 
 //split & remove features
 DataFrame prepareDF(Parameters params) {
@@ -117,7 +122,7 @@ void protocol_special(RandomGen rng, Parameters params, DataFrame df0) {
 	trainDF.printSummary();
 	RandomForest *myRF = new RandomForest(trainDF, rng, params);
 	myRF->printInfo();
-	myRF->growForest_parallel();
+	myRF->train();
 	//LOSS
 	cout << "#Training (out-of-bag):" << endl;
 	LUtils::evaluate(myRF->dataframe, myRF->poob_all, false, 1);
@@ -171,7 +176,7 @@ void blending(RandomGen rng, Parameters params) {
 		params.mtry.push_back(max(4, (trainDF.nrcols / 2)));
 		RandomForest *myRF = new RandomForest(trainDF, rng, params);
 		myRF->printInfo();
-		myRF->growForest();
+		myRF->train();
 		pall.col(i) = myRF->poob_all;
 
 		//test set
@@ -208,7 +213,7 @@ void simpleRF(RandomGen rng, Parameters params, DataFrame df0) {
 			myRF->nrTrees = params.nrtrees[i];
 			myRF->mTry = params.mtry[j];
 			myRF->printInfo();
-			myRF->growForest_parallel();
+			myRF->train();
 			double loss = myRF->oob_loss;
 			//save results
 			stringstream info;
@@ -250,7 +255,7 @@ void simpleTree(RandomGen rng, Parameters params, DataFrame df0) {
 	Tree *myTree = new Tree(params.min_nodes, params.probability,
 			df0.regression);
 	myTree->max_depth = params.max_depth;
-	myTree->growTree(df0, false);
+	myTree->train(df0, false);
 	myTree->showTree();
 	Eigen::VectorXd p = myTree->predict(df0);
 	LUtils::evaluate(df0, p, params.probability, 0);
@@ -261,6 +266,12 @@ void multiTree(RandomGen rng, Parameters params, DataFrame df0) {
 		rng.setSeed(params.seed + i);
 		simpleTree(rng, params, df0);
 	}
+}
+
+void linear_model(RandomGen rng, Parameters params, DataFrame df0) {
+	MLModel *model = new OnlineSGD();
+	model->train(df0.matrix,df0.y);
+	model->predict(df0.matrix);
 }
 
 void selectProtocol(RandomGen rng, Parameters params) {
@@ -286,6 +297,9 @@ void selectProtocol(RandomGen rng, Parameters params) {
 		} else if (params.protocol[i].find("tree") != std::string::npos) {
 			cout << "Decision Tree" << endl;
 			simpleTree(rng, params, df);
+		} else if (params.protocol[i].find("onlineSGD") != std::string::npos) {
+			cout << "LinearModel" << endl;
+			linear_model(rng, params, df);
 		} else if (params.protocol[i].find("train_predict")
 				!= std::string::npos) {
 			cout << "Training&Prediction" << endl;
