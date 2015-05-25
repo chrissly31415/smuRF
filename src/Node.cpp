@@ -89,7 +89,7 @@ void Node::showChildren(const bool verbose) {
 //shows children nodes recursively
 void Node::showChildren_formatR(const bool verbose) {
 	if (isTerminal == false) {
-		cout << left->nodeID <<" "<<feature<<" "<<splitvalue;
+		cout << (left->nodeID)+1 <<" "<<feature<<" "<<splitvalue;
 		cout << endl;
 	} else if (isTerminal == true) {
 		cout << "0 " <<"NA "<<cm;

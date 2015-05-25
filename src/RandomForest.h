@@ -18,7 +18,6 @@ using namespace std;
 
 struct RandomForest {
 	RandomForest(DataFrame ldf, RandomGen rng, Parameters params);
-
 	~RandomForest();
 
 	DataFrame dataframe;
@@ -30,15 +29,14 @@ struct RandomForest {
 
 	vector<Tree> trees;
 	vector<int> oobcounter;
-
 	Eigen::VectorXd poob_all;
 
-	Eigen::VectorXd averageOOB(const Eigen::MatrixXd &pall);
-
-	Eigen::VectorXd predict(DataFrame &testSet, const bool verbose = false);
 	void train();
-	void printInfo();
+	Eigen::VectorXd predict(DataFrame &testSet, const bool verbose = false);
 
+	Eigen::VectorXd averageOOB(const Eigen::MatrixXd &pall);
+	void printInfo();
+	string forest2string();
 
 
 };

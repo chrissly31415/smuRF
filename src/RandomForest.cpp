@@ -55,6 +55,15 @@ void RandomForest::printInfo() {
 	cout << endl;
 }
 
+string RandomForest::forest2string() {
+	string tmp = "";
+	for (int i = 0; i < nrTrees; i++) {
+		tmp = tmp +  trees[i].tree2string();
+	}
+	return tmp;
+}
+
+
 //predict
 Eigen::VectorXd RandomForest::predict(DataFrame &testSet, const bool verbose) {
 	Eigen::MatrixXd pall(testSet.nrrows, nrTrees);

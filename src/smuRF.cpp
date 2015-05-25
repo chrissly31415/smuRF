@@ -139,64 +139,6 @@ void protocol_special(RandomGen rng, Parameters params, DataFrame df0) {
 	delete iohelper;
 }
 
-void blending(RandomGen rng, Parameters params) {
-	IOHelper *iohelper = new IOHelper;
-	DataFrame df0 = iohelper->readCSVfile(params.dataset.back()).removeColumn(
-			0);
-	DataFrame trainDF;
-	DataFrame testDF;
-	df0.splitFrame(0.5, 0, testDF, trainDF);
-	Eigen::MatrixXd pall(trainDF.nrrows, params.dataset.size());
-	Eigen::MatrixXd pall_test(testDF.nrrows, params.dataset.size());
-	for (unsigned i = 0; i < params.dataset.size(); i++) {
-		rng.setSeed(params.seed + i);
-		DataFrame df = iohelper->readCSVfile(params.dataset.at(i));
-		if (df0.nrrows != df.nrrows) {
-			cout << "Dataframes in blending routine are of unequal length!"
-					<< endl;
-			exit(1);
-		}
-		if (df.containsFeature("train") > -1) {
-			df.splitFrame(0.5, df.containsFeature("train"), testDF, trainDF);
-			cout << "Splitting of test set and removing train variable."
-					<< endl;
-			trainDF = trainDF.removeColumn(trainDF.containsFeature("train"));
-			testDF = testDF.removeColumn(testDF.containsFeature("train"));
-		} else {
-			cout << "Dataset should contain column 'train'" << endl;
-			exit(1);
-		}
-		if (df.containsFeature("name") > -1) {
-			trainDF = trainDF.removeColumn(trainDF.containsFeature("name"));
-			testDF = testDF.removeColumn(testDF.containsFeature("name"));
-			cout << "Removing column names." << endl;
-		}
-		trainDF.printSummary();
-		//train set
-		params.mtry.push_back(max(4, (trainDF.nrcols / 2)));
-		RandomForest *myRF = new RandomForest(trainDF, rng, params);
-		myRF->printInfo();
-		myRF->train();
-		pall.col(i) = myRF->poob_all;
-
-		//test set
-		//testDF = testDF.removeColumn(0);
-		testDF.printSummary();
-		Eigen::VectorXd ptest = myRF->predict(testDF);
-		pall_test.col(i) = LUtils::round(ptest);
-
-	}
-	Eigen::VectorXd pfinal = pall.rowwise().sum()
-			/ (double) params.dataset.size();
-	cout << endl << "Blending results (" << params.dataset.size()
-			<< " datasets):" << endl;
-	LUtils::evaluate(trainDF, pfinal, params.probability, 1);
-	//prediction test set
-	Eigen::VectorXd pfinal_test = pall_test.rowwise().sum()
-			/ (double) params.dataset.size();
-	iohelper->writePred2CSV("predicted_blending.csv", testDF,
-			LUtils::round(pfinal_test));
-}
 
 void showData(RandomGen rng, Parameters params, DataFrame df0) {
 	df0.printSummary();
@@ -225,11 +167,12 @@ void simpleRF(RandomGen rng, Parameters params, DataFrame df0) {
 				min_loss = loss;
 				min_pos = info.str();
 			}
+			cout<<"\nForest structure:\n"<<myRF->forest2string();
 			delete myRF;
 		}
 	}
 	if (params.nrtrees.size() + params.mtry.size() > 1) {
-		printf("SUMMARY\n");
+		printf("SUMMARY:\n");
 		cout << fixed << setprecision(3);
 		for (map<string, double>::const_iterator it = results.begin();
 				it != results.end(); ++it) {
@@ -248,6 +191,7 @@ void simpleRF(RandomGen rng, Parameters params, DataFrame df0) {
 			cout << ">>Optimum: " << min_pos << " with loss:" << min_loss
 					<< endl;
 		}
+
 	}
 }
 
@@ -257,6 +201,9 @@ void simpleTree(RandomGen rng, Parameters params, DataFrame df0) {
 	myTree->max_depth = params.max_depth;
 	myTree->train(df0, false);
 	myTree->showTree();
+	string tmp = myTree->tree2string();
+	//cout << "leftdaughter splitvar splitpoint/prediction" << endl;
+	cout << tmp<<flush<<endl;
 	Eigen::VectorXd p = myTree->predict(df0);
 	LUtils::evaluate(df0, p, params.probability, 0);
 }

@@ -8,15 +8,17 @@
  */
 
 #include <iostream>
+#include <cmath>
+#include <boost/make_shared.hpp>
+
 #include "LUtils.h"
 #include "IOHelper.h"
 #include "Tree.h"
 #include "Node.h"
-#include <boost/make_shared.hpp>
 
 //Binary tree
 Tree::Tree(int n, bool p, bool r, double w, int seed) :
-	min_node(n), probability(p), regression(r), w1(w), rseed(seed) {
+		min_node(n), probability(p), regression(r), w1(w), rseed(seed) {
 	root = boost::make_shared<Node>(0, 0.0);
 	tree_size = 0;
 	max_depth = 100;
@@ -173,20 +175,52 @@ void Tree::createBranch(boost::shared_ptr<Node> parentNode, DataFrame &dfsplit,
 }
 
 void Tree::showTree(const bool verbose) {
-	cout << endl << "###Printing Tree Structure..." << endl;
-	//root->showChildren(verbose);
-	root->showChildren_formatR();
-	cout << "Number of terminal nodes:" << tnodecount << endl;
+	cout << endl << "###Printing Tree Structure" << endl;
+	root->showChildren(verbose);
 }
 
 string Tree::tree2string() {
-
-	return "";
+	//cout << endl << "###Printing Simpified Tree Structure" << endl;
+	stringstream ss;
+	ss << "# rftree"<<endl;
+	ss << "2 " << root->feature << " " << root->splitvalue << endl;
+	vector<boost::shared_ptr<Node> > parentnodes;
+	parentnodes.push_back(root);
+	//we have to re-sort the binary tree
+	for (int i = 1; i < 5; ++i) {
+		vector<boost::shared_ptr<Node> > actualnodes;
+		int n_nodes = pow(2, i);
+		//cout << "LEVEL:" << i << " NR NODES:" << n_nodes << endl;
+		for (int j = 0; j < n_nodes; ++j) {
+			boost::shared_ptr<Node> parent = parentnodes[j / 2];
+			if (parent->isTerminal) {
+							continue;
+						}
+			boost::shared_ptr<Node> node;
+			int id = pow(2, i) + j;
+			if (j % 2 == 0) {
+				node = parent->left;
+			} else {
+				node = parent->right;
+			}
+			if (!node->isTerminal) {
+				int leftid = 2 * id;
+				ss << leftid << " " << node->feature << " "
+						<< node->splitvalue << endl;
+				actualnodes.push_back(node);
+			} else {
+				ss << "0 NA " << node->cm << endl;
+				actualnodes.push_back(node);
+			}
+		}
+		parentnodes = actualnodes;
+	}
+	return ss.str();
 }
 
 //prediction for external data
 Eigen::VectorXd Tree::predict(DataFrame &testSet, const bool verbose) {
-	//starting at root level, then call makePredictions recursively
+//starting at root level, then call makePredictions recursively
 	double pi = 0.0;
 	Eigen::VectorXd p(testSet.nrrows);
 	for (int obs = 0; obs < testSet.nrrows; obs++) {
@@ -211,7 +245,7 @@ Eigen::VectorXd Tree::predict(DataFrame &testSet, const bool verbose) {
 		}
 
 	}
-	//original order for p
+//original order for p
 	Eigen::VectorXd tmp(testSet.nrrows);
 	int idx_orig = 0;
 	for (int i = 0; i < testSet.nrrows; i++) {
@@ -221,7 +255,7 @@ Eigen::VectorXd Tree::predict(DataFrame &testSet, const bool verbose) {
 	for (int i = 0; i < testSet.nrrows; i++) {
 		p(i) = tmp(i);
 	}
-	//after prediction we have to re-establish the original order
+//after prediction we have to re-establish the original order
 	testSet.restoreOrder();
 	if (verbose)
 		cout << "###Tree size:" << tree_size + 1 << " nodes." << endl;
@@ -247,7 +281,7 @@ double Tree::makePrediction(const DataFrame &testset,
 		//makePrediction rightDF
 		t = makePrediction(testset, localNode->right, obs, verbose);
 	}
-	//if we reach this end we go upwards again...
+//if we reach this end we go upwards again...
 	return t;
 }
 
