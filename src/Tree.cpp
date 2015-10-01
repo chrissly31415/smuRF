@@ -241,7 +241,7 @@ Eigen::VectorXd Tree::predict(DataFrame &testSet, const bool verbose) {
 		p(obs) = pi;
 		if (verbose) {
 			cout << "p(" << obs << "): " << p(obs) << " order:"
-					<< testSet.order[obs] << endl;
+					<< testSet.order[obs] <<endl;
 		}
 
 	}

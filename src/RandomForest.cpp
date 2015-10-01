@@ -15,13 +15,28 @@
 #include "IOHelper.h"
 #include <iostream>
 
+
+RandomForest::RandomForest()
+{
+	nrTrees = 100;
+	mTry = 5;
+	min_node = 1;
+	max_depth = 30;
+	verbose_level = 0;
+	probability = true;
+	numjobs = 1;
+	weight = 1.0;
+	entropy_loss = false;
+	oob_loss = 0.0;
+
+}
+
 RandomForest::RandomForest(DataFrame ldf, RandomGen lrng, Parameters params) :
 		dataframe(ldf), rng(lrng), nrTrees(params.nrtrees.back()), mTry(
 				params.mtry.back()), min_node(params.min_nodes), max_depth(
 				params.max_depth), verbose_level(params.verbose), probability(
 				params.probability), numjobs(params.numjobs), weight(
 				params.weight), entropy_loss(params.entropy) {
-	oobcounter = vector<int>(dataframe.nrrows);
 	oob_loss = 0.0;
 }
 
@@ -92,6 +107,7 @@ void RandomForest::train() {
 	cout << "++Using OPENMP - NUMTHREADS:" << nthreads << "++\n";
 #endif
 
+	oobcounter = vector<int>(dataframe.nrrows);
 	int nrFeat = mTry;
 	if (nrFeat > dataframe.nrcols - 1) {
 		cout << "ERROR: Illegal value for try_features, maximum value:"
@@ -147,6 +163,7 @@ void RandomForest::train() {
 					localFrame.nrrows);
 			DataFrame oobagsample = localFrame.getRows(oobagidx, true);
 			Eigen::VectorXd p_oob = myTree.predict(oobagsample, verbose);
+
 			Eigen::VectorXd p = LUtils::fillPredictions(p_oob, oobagidx,
 					localFrame.nrrows, oobcounter);
 

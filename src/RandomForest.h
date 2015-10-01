@@ -17,6 +17,7 @@
 using namespace std;
 
 struct RandomForest {
+	RandomForest();
 	RandomForest(DataFrame ldf, RandomGen rng, Parameters params);
 	~RandomForest();
 
@@ -31,6 +32,7 @@ struct RandomForest {
 	vector<int> oobcounter;
 	Eigen::VectorXd poob_all;
 
+	void setParameters(DataFrame ldf, int nrTrees, int mTry, int min_node, int max_depth, int verbose_level, int probability,int numjobs);
 	void train();
 	Eigen::VectorXd predict(DataFrame &testSet, const bool verbose = false);
 

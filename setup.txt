@@ -1,12 +1,12 @@
 ####general parameters####
 verbose=1
 seed =123 
-numjobs=8
+numjobs=4
 
 ####dataset specific####
 #dataset=data/mboston.csv
-#dataset=data/solubility.csv
-dataset=data/mp_cdk.csv
+dataset=data/solubility.csv
+#dataset=data/mp_cdk.csv
 #dataset=data/katritzky_n_small.csv
 #testset=data/katritzky_n_small.csv
 #dataset=data/karthikeyan_mp2.csv
@@ -24,12 +24,15 @@ dataset=data/mp_cdk.csv
 remove=0
 
 ####rf parameters####
-#iter=1
+#iter=2
 #class_weight=0.2
 nrtrees = 400
-try_features = 30
-min_node = 5 
-max_depth = 30 
+nrtrees = 600
+try_features = 10
+try_features = 5 
+try_features = 15 
+min_node = 10 
+max_depth = 40 
 #loss=entropy
 #probability
 
@@ -37,8 +40,8 @@ max_depth = 30
 #job=show
 #job=tree
 #job=xval
-#job=rf
-job=train_predict
+job=rf
+#job=train_predict
 #job=multitransform
 #job=blending
 #job=transform

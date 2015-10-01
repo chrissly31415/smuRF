@@ -8,6 +8,10 @@
 #ifndef PARAMETERS_H_
 #define PARAMETERS_H_
 
+#include <vector>
+
+using namespace std;
+
 struct Split {
 			double splitvalue;
 			int splitcolumn;

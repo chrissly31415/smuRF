@@ -149,7 +149,7 @@ void DataFrame::printSummary() {
 			printSummary(j, false);
 	}
 	//getKtile shuffles data.
-	restoreOrder();
+	//restoreOrder();
 }
 
 vector<double> DataFrame::getSplits(int k, int colnr, bool sort) {

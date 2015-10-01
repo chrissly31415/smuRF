@@ -67,56 +67,81 @@ struct LUtils {
 		//sampling create vector with indices and remove them one by one....
 		vector<int> zero_idx;
 		vector<int> ones_idx;
-		//fill vector
-		for (int i = 0; i < df.nrrows; ++i) {
-			if (df.matrix(i, colnr) == 1) {
-				ones_idx.push_back(i);
-			} else {
-				zero_idx.push_back(i);
-			}
-		}
+
 		if (!df.regression) {
+			cout << "Classification: Strata creation." << endl;
+			//fill vector
+			for (int i = 0; i < df.nrrows; ++i) {
+				if (df.matrix(i, colnr) == 1) {
+					ones_idx.push_back(i);
+				} else {
+					zero_idx.push_back(i);
+				}
+			}
 			cout << "Total fraction of     1: "
 					<< ones_idx.size() / (double) df.nrrows << " ["
 					<< ones_idx.size() << "/" << df.nrrows << "]" << endl;
 			cout << "Total fraction of other: "
 					<< zero_idx.size() / (double) df.nrrows << " ["
 					<< zero_idx.size() << "/" << df.nrrows << "]" << endl;
+
+			//fill with 1 values
+			while (ones_idx.size() > 0) {
+				for (int i = 0; i < k; ++i) {
+					if (ones_idx.size() == 0)
+						continue;
+					int tmp = rng.getRandomNumber(ones_idx.size());
+					strata.at(i).push_back(ones_idx[tmp]);
+					//swap value with last one
+					int tmp2 = ones_idx.back();
+					ones_idx.back() = ones_idx[tmp];
+					ones_idx[tmp] = tmp2;
+					//go trough each strata
+					ones_idx.pop_back();
+				}
+			}
+			//fill with 0 values
+			while (zero_idx.size() > 0) {
+				for (int i = 0; i < k; ++i) {
+					if (zero_idx.size() == 0)
+						continue;
+					int tmp = rng.getRandomNumber(zero_idx.size());
+					strata.at(i).push_back(zero_idx[tmp]);
+					//swap value with last one
+					int tmp2 = zero_idx.back();
+					zero_idx.back() = zero_idx[tmp];
+					zero_idx[tmp] = tmp2;
+					//go trough each strata
+					zero_idx.pop_back();
+				}
+			}
+
 		} else {
 			cout << "Regression: Skipping strata creation." << endl;
-		}
-		//fill with 1 values
-		while (ones_idx.size() > 0) {
-			for (int i = 0; i < k; ++i) {
-				if (ones_idx.size() == 0)
-					continue;
-				int tmp = rng.getRandomNumber(ones_idx.size());
-				strata.at(i).push_back(ones_idx[tmp]);
-				//cout<<strata.at(k)
-				//swap value with last one
-				int tmp2 = ones_idx.back();
-				ones_idx.back() = ones_idx[tmp];
-				ones_idx[tmp] = tmp2;
-				//go trough each strata
-				ones_idx.pop_back();
+			cout<<"rows:"<<df.nrrows<<endl;
+			for (int i = 0; i < df.nrrows; ++i) {
+					ones_idx.push_back(i);
 			}
-		}
-		//fill with 0 values
-		while (zero_idx.size() > 0) {
-			for (int i = 0; i < k; ++i) {
-				if (zero_idx.size() == 0)
-					continue;
-				int tmp = rng.getRandomNumber(zero_idx.size());
-				strata.at(i).push_back(zero_idx[tmp]);
-				//cout<<strata.at(k)
-				//swap value with last one
-				int tmp2 = zero_idx.back();
-				zero_idx.back() = zero_idx[tmp];
-				zero_idx[tmp] = tmp2;
-				//go trough each strata
-				zero_idx.pop_back();
+			cout<<"indices:"<<ones_idx.size()<<endl;
+			//distribute targets to folds
+			while (ones_idx.size() > 0) {
+				for (int i = 0; i < k; ++i) {
+					if (ones_idx.size() == 0)
+						continue;
+					int tmp = rng.getRandomNumber(ones_idx.size());
+					strata.at(i).push_back(ones_idx[tmp]);
+					//cout<<"ones_idx[tmp]: "<<ones_idx[tmp]<<" left:"<<ones_idx.size()<<endl;
+					//swap value with last one
+					int tmp2 = ones_idx.back();
+					ones_idx.back() = ones_idx[tmp];
+					ones_idx[tmp] = tmp2;
+					//go trough each strata
+					ones_idx.pop_back();
+				}
 			}
+
 		}
+
 		//summarize percentage of y in each stratum
 		return strata;
 	}
@@ -493,10 +518,6 @@ struct LUtils {
 			}
 
 		}
-		//		mean_tpr = mean_tpr / n;
-		//		sq_tpr = sq_tpr / n;
-		//		cout << "mean:" << mean_tpr << " +/-:" << sqrt(mean_tpr - sq_tpr) / n
-		//				<< endl;
 		if (verbose) {
 			cout << setprecision(4) << "AUC:" << integ << endl;
 			writeColumns("auc.csv", fpr, tpr, ";");
@@ -728,20 +749,22 @@ struct LUtils {
 		df.printSummary();
 		vector<vector<int> > strata = LUtils::strata_sample(k, df, df.classCol,
 				rng);
+
 		vector<DataFrame> xvaldfs;
 		double loss = 0.0;
 		for (int i = 0; i < k; ++i) {
 			DataFrame testDF = df.getRows(strata.at(i), true);
-			//testDF.printSummary();
+			cout<<"Test set observations:"<<testDF.nrrows<<"\n";
+
 			vector<int> trainidx = LUtils::complement(strata.at(i), df.nrrows);
 			DataFrame trainDF = df.getRows(trainidx, true);
-			trainDF.printSummary(trainDF.classCol, true);
+			cout<<"Train set observations:"<<trainDF.nrrows<<"\n";
+
 			RandomForest myRF(trainDF, rng, params);
-			//myRF->printInfo();
 			cout << "Fold " << i + 1 << ": ";
 			myRF.train();
+
 			Eigen::VectorXd p = myRF.predict(testDF);
-			testDF.printSummary(testDF.classCol, true);
 			loss = loss + LUtils::evaluate(testDF, p, false, false);
 		}
 		cout << endl << "XValdiation Summary:" << endl;

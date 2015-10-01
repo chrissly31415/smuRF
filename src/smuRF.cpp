@@ -24,6 +24,7 @@
 #include "LUtils.h"
 #include "RandomGen.h"
 #include "Parameters.h"
+#include "pysmurf.h"
 
 using namespace std;
 
@@ -32,10 +33,11 @@ using namespace std;
 
 //TODO Possible Improvements:
 //TODO write metrics class
+//TODO can we write a RF which only uses/extends matrix class from Eigen?
+//TODO static allocation of arrays for tree structure, e.g. depth = f(n_samples)
 //TODO improve predictor statistics: -> near zero variance and skewness
-//TODO can we write a RF which only uses matrix class from Eigen?
 //TODO implement normal equation and stochastic gradient descent
-//TODO interface to python
+//TODO interface to python: python interface http://stackoverflow.com/questions/145270/calling-c-c-from-python
 //TODO improve parsing
 //TODO Should not we use featX==a for categorical values? -> only numerical ons
 //TODO Saving of models
@@ -46,7 +48,6 @@ using namespace std;
 //TODO -fomit-frame-pointer
 //TODO flags: -floop-optimize  -funroll-loops -march=native -fomit-frame-pointer
 //TODO no open mp for MSVC express...:-(
-
 
 //split & remove features
 DataFrame prepareDF(Parameters params) {
@@ -74,23 +75,18 @@ DataFrame prepareDF(Parameters params) {
 //crossvalidation
 void xval(RandomGen rng, Parameters params, DataFrame df) {
 	//if test (validation) set exists remove it
-	if (df.containsFeature("train") > -1) {
-		DataFrame trainDF;
-		DataFrame testDF;
-		df.splitFrame(0.5, df.containsFeature("train"), testDF, trainDF);
-		cout << "Splitting of test set and removing train variable." << endl;
-		df = trainDF.removeColumn(trainDF.containsFeature("train"));
-	}
+//	if (df.containsFeature("train") > -1) {
+//		DataFrame trainDF;
+//		DataFrame testDF;
+//		df.splitFrame(0.5, df.containsFeature("train"), testDF, trainDF);
+//		cout << "Splitting of test set and removing train variable." << endl;
+//		df = trainDF.removeColumn(trainDF.containsFeature("train"));
+//	}
 	if (df.containsFeature("name") > -1) {
 		df = df.removeColumn(df.containsFeature("name"));
 		cout << "Removing column names." << endl;
 	}
 	df.printSummary();
-	//DataFrame trainDF;
-	//DataFrame testDF;
-	//df.splitFrame(0.5, 0, testDF, trainDF);
-	//trainDF = trainDF.removeColumn(0);
-	//testDF = testDF.removeColumn(0);
 	LUtils::Xvalidation(5, df, rng, params);
 }
 
@@ -144,7 +140,14 @@ void showData(RandomGen rng, Parameters params, DataFrame df0) {
 	df0.printSummary();
 }
 
+void test_python(RandomGen rng, Parameters params, DataFrame df0) {
+	RF *rf = RF_new();
+	rf->fit(1.0);
+	double res = rf->predict(2.0);
+}
+
 void simpleRF(RandomGen rng, Parameters params, DataFrame df0) {
+	cout<<"\ntree size:\n"<<params.nrtrees.size();
 	df0.printSummary();
 	map<string, double> results;
 	string min_pos = "";
@@ -167,7 +170,7 @@ void simpleRF(RandomGen rng, Parameters params, DataFrame df0) {
 				min_loss = loss;
 				min_pos = info.str();
 			}
-			cout<<"\nForest structure:\n"<<myRF->forest2string();
+			//cout<<"\nForest structure:\n"<<myRF->forest2string();
 			delete myRF;
 		}
 	}
@@ -202,7 +205,6 @@ void simpleTree(RandomGen rng, Parameters params, DataFrame df0) {
 	myTree->train(df0, false);
 	myTree->showTree();
 	string tmp = myTree->tree2string();
-	//cout << "leftdaughter splitvar splitpoint/prediction" << endl;
 	cout << tmp<<flush<<endl;
 	Eigen::VectorXd p = myTree->predict(df0);
 	LUtils::evaluate(df0, p, params.probability, 0);
@@ -235,6 +237,8 @@ void selectProtocol(RandomGen rng, Parameters params) {
 		if (params.protocol[i].find("rf") != std::string::npos) {
 			cout << "Random Forest" << endl;
 			simpleRF(rng, params, df);
+		} else if (params.protocol[i].find("test") != std::string::npos) {
+			test_python(rng, params, df);
 		} else if (params.protocol[i].find("show") != std::string::npos) {
 			cout << "Show Data" << endl;
 			showData(rng, params, df);
@@ -268,7 +272,7 @@ int main() {
 	cout << "###    smuRF - simple multithreaded Random Forest      ###\n";
 	cout << "###	                                               ###\n";
 	cout << "###    version:" << version
-			<< " (c)Christoph Loschen, 2012-2014     ###\n";
+			<< " (c)Christoph Loschen, 2012-2015     ###\n";
 	cout << "##########################################################\n\n";
 #ifdef __unix__
 	timeval t1, t2;
@@ -289,6 +293,8 @@ int main() {
 	Parameters params = iohelper->parseParameters("setup.txt");
 	static RandomGen rng(params.seed);
 	selectProtocol(rng, params);
+
+
 
 #ifdef __unix__
 	gettimeofday(&t2, NULL);

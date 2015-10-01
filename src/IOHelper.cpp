@@ -478,7 +478,6 @@ DataFrame IOHelper::readCSVfile(string filename) {
 					df.y(lcount) = tmp;
 				}
 			}
-			//last column is target
 			df.order.at(lcount) = lcount;
 			lcount++;
 			getline(myfile, line);
