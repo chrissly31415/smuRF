@@ -6,7 +6,7 @@
  */
 
 #ifdef _OPENMP
-	#include <omp.h>
+#include <omp.h>
 #endif
 
 #include "RandomForest.h"
@@ -15,20 +15,17 @@
 #include "IOHelper.h"
 #include <iostream>
 
-
-RandomForest::RandomForest()
-{
+RandomForest::RandomForest() {
 	nrTrees = 100;
 	mTry = 5;
 	min_node = 1;
 	max_depth = 30;
-	verbose_level = 0;
+	verbose_level = 1;
 	probability = true;
 	numjobs = 1;
 	weight = 1.0;
 	entropy_loss = false;
 	oob_loss = 0.0;
-
 }
 
 RandomForest::RandomForest(DataFrame ldf, RandomGen lrng, Parameters params) :
@@ -38,6 +35,32 @@ RandomForest::RandomForest(DataFrame ldf, RandomGen lrng, Parameters params) :
 				params.probability), numjobs(params.numjobs), weight(
 				params.weight), entropy_loss(params.entropy) {
 	oob_loss = 0.0;
+}
+
+void RandomForest::setParameters(DataFrame ldf_, int nrTrees_, int mTry_,
+		int min_node_, int max_depth_, int verbose_level_, int probability_,
+		int numjobs_) {
+	dataframe = ldf_;
+	nrTrees = nrTrees_;
+	mTry = mTry_;
+	min_node = min_node_;
+	max_depth = max_depth_;
+	verbose_level = max_depth_;
+	probability = probability_;
+	numjobs = numjobs_;
+	;
+}
+void RandomForest::setParameters(int nrTrees_, int mTry_, int min_node_,
+		int max_depth_, int numjobs_) {
+	nrTrees = nrTrees_;
+	mTry = mTry_;
+	min_node = min_node_;
+	max_depth = max_depth_;
+	numjobs = numjobs_;
+}
+
+void RandomForest::setDataFrame(DataFrame &ldf_) {
+	dataframe = ldf_;
 }
 
 //prints general info on RF
@@ -73,11 +96,10 @@ void RandomForest::printInfo() {
 string RandomForest::forest2string() {
 	string tmp = "";
 	for (int i = 0; i < nrTrees; i++) {
-		tmp = tmp +  trees[i].tree2string();
+		tmp = tmp + trees[i].tree2string();
 	}
 	return tmp;
 }
-
 
 //predict
 Eigen::VectorXd RandomForest::predict(DataFrame &testSet, const bool verbose) {
@@ -117,6 +139,7 @@ void RandomForest::train() {
 	cout << "Growing forest with " << nrFeat
 			<< " random features, using sampling with replacement.";
 	cout << endl;
+
 	Eigen::MatrixXd pall = Eigen::MatrixXd::Zero(dataframe.nrrows, nrTrees);
 
 	//seeds and out of bag indices generated outside parallel loop to warrant reproducibility
@@ -181,9 +204,10 @@ void RandomForest::train() {
 		cout << "THREAD::" << id << " finished\n";
 	}
 	poob_all = averageOOB(pall);
-//	cout << "Training results (out-of-bag):" << endl;
+	if (verbose_level > 0) cout << "Training results (out-of-bag):" << endl;
 	oob_loss = LUtils::evaluate(dataframe, poob_all, probability,
 			verbose_level);
+
 //
 //	if (!dataframe.regression)
 //		 LUtils::aucLoss(dataframe.matrix.col(dataframe.classCol), poob_all,

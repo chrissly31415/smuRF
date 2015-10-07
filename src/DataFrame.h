@@ -49,6 +49,7 @@ struct DataFrame {
 	virtual ~DataFrame();
 
 	//Setter methods
+	void setParameters();
 	void setMatrix(const MatrixXdcm &matrix);
 	void setHeader(const vector<string> &header);
 	void setOrder(const vector<int> &order);

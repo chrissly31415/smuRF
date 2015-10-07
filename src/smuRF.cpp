@@ -141,9 +141,9 @@ void showData(RandomGen rng, Parameters params, DataFrame df0) {
 }
 
 void test_python(RandomGen rng, Parameters params, DataFrame df0) {
-	RF *rf = RF_new();
-	rf->fit(1.0);
-	double res = rf->predict(2.0);
+//	RF *rf = RF_new();
+//	rf->fit(1.0);
+//	double res = rf->predict(2.0);
 }
 
 void simpleRF(RandomGen rng, Parameters params, DataFrame df0) {

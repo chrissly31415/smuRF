@@ -36,6 +36,10 @@ DataFrame::DataFrame(int a, int b, int c, bool r) :
 DataFrame::DataFrame() {
 }
 
+void DataFrame::setParameters() {
+	cout<<"C: Setting parameters..."<<endl;
+}
+
 void DataFrame::printData() {
 	cout << setw(5) << "";
 	for (int j = 0; j < nrcols; j++) {
