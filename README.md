@@ -10,6 +10,7 @@ Mainly tree based machine learning code. Current features:
 - crossvalidation
 - shared memory parallelization
 - runs under windows/linux
+- python interface (currently linux only)
 
 Dataset, parameters & workflow definition are read from a textfile "setup.txt" which may look like: 
 
@@ -24,10 +25,6 @@ Save "setup.txt" to location of the binary.
 
 Then simply call the program from the command line:  
 
-./smurf 
+./smurf
 
-Binaries for windows and linux (64bit) are in folder bin/    
-
-
-
-
+Binaries for windows and linux (64bit) are in folder bin/
