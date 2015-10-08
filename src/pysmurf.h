@@ -6,6 +6,7 @@
 #include "RandomForest.h"
 #include "DataFrame.h"
 #include <boost/make_shared.hpp>
+#include <python2.7/Python.h>
 
 using namespace std;
 
@@ -19,16 +20,7 @@ typedef void* DataFrameHandle;
 //http://stackoverflow.com/questions/13908226/how-to-pass-pointer-back-in-ctypes
 //have a look at xgboost_wrapper.cpp & xgboost.py
 
-//class DF {
-//public:
-//	void set_parameters() {
-//	}
-//
-//};
-
-
 extern "C" {
-//RandomForest
 RandomForest* RandomForest_new() {
 	cout << "C: creating RF..." << endl;
 	return new RandomForest();
@@ -51,14 +43,31 @@ void RandomForest_train(RandomForest *rf) {
 	rf->train();
 }
 
-void RandomForest_fit_Free(RandomForest *rf) {
+PyObject* RandomForest_predict(RandomForest *rf,DataFrameHandle handle) {
+	DataFrame &df = *static_cast<DataFrame*>(handle);
+	Eigen::VectorXd p = rf->predict(df,true);
+	//const Eigen::IOFormat fmt(3, Eigen::DontAlignCols, "\t", " ", "", "", "", "");
+	//cout.precision(3);
+	//const Eigen::IOFormat npformat(Eigen::StreamPrecision, 0, ", ", ", ", "", "", "[", "]");
+	//std::cout << p.format(npformat) <<endl;
+
+	PyObject* result = PyList_New(0);
+	for (int i = 0; i < p.size(); ++i) {
+		float val = p(i);
+		PyList_Append(result,  Py_BuildValue("d", val));
+		//PyList_Append(result,  PyInt_FromLong(i));
+	}
+	return result;
+
+	//vector<int> vec(p.data(), p.data() + p.rows() * p.cols());
+
+	//return vec;
+}
+
+void RandomForest_Free(RandomForest *rf) {
 	delete rf;
 }
 
-//double RF_predict(RF *rf, double a) {
-//	double res = rf->predict(a);
-//	return res;
-//}
 
 //DataFrame
 DataFrame* DF_new() {
@@ -98,9 +107,8 @@ void DF_createFromNumpy(const float *data, int nrow, int ncol, DataFrameHandle* 
 	tmp.analyze();
 	//tmp.printData();
 	*out = df;
-	//if deleted then problem????
+	//potential memory leak here!!!
 	//delete df;
-	//now it shoudld be returned...!
 }
 
 void DF_Free(DataFrameHandle handle) {

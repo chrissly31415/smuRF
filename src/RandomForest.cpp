@@ -101,7 +101,7 @@ string RandomForest::forest2string() {
 	return tmp;
 }
 
-//predict
+//predict, could also be parallized!
 Eigen::VectorXd RandomForest::predict(DataFrame &testSet, const bool verbose) {
 	Eigen::MatrixXd pall(testSet.nrrows, nrTrees);
 	Eigen::VectorXd p;
