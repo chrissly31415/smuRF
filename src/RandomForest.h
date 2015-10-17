@@ -33,7 +33,7 @@ struct RandomForest {
 	Eigen::VectorXd poob_all;
 
 	void setParameters(DataFrame ldf, int nrTrees, int mTry, int min_node, int max_depth, int verbose_level, int probability,int numjobs);
-	void setParameters(int nrTrees, int mTry, int min_node, int max_depth, int numjobs);
+	void setParameters(int nrTrees, int mTry, int min_node, int max_depth, int numjobs,int verbose_level);
 	void setDataFrame(DataFrame &ldf);
 
 	void train();

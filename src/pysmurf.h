@@ -22,12 +22,11 @@ typedef void* DataFrameHandle;
 
 extern "C" {
 RandomForest* RandomForest_new() {
-	cout << "C: creating RF..." << endl;
 	return new RandomForest();
 }
 
-void RandomForest_setParameters(RandomForest *rf, int nrTrees, int mTry, int min_node, int max_depth, int n_jobs) {
-	rf->setParameters(nrTrees, mTry, min_node, max_depth,n_jobs);
+void RandomForest_setParameters(RandomForest *rf, int nrTrees, int mTry, int min_node, int max_depth, int n_jobs, int verbose_level) {
+	rf->setParameters(nrTrees, mTry, min_node, max_depth,n_jobs,verbose_level);
 }
 
 void RandomForest_printInfo(RandomForest *rf) {
@@ -36,6 +35,8 @@ void RandomForest_printInfo(RandomForest *rf) {
 
 void RandomForest_setDataFrame(RandomForest *rf,DataFrameHandle handle) {
 	DataFrame &dsrc = *static_cast<DataFrame*>(handle);
+	//we want our own dataframe
+	//DataFrame copy_df = dsrc.copy();
 	rf->setDataFrame(dsrc);
 }
 
@@ -45,12 +46,11 @@ void RandomForest_train(RandomForest *rf) {
 
 PyObject* RandomForest_predict(RandomForest *rf,DataFrameHandle handle) {
 	DataFrame &df = *static_cast<DataFrame*>(handle);
-	Eigen::VectorXd p = rf->predict(df,true);
+	Eigen::VectorXd p = rf->predict(df,false);
 	//const Eigen::IOFormat fmt(3, Eigen::DontAlignCols, "\t", " ", "", "", "", "");
 	//cout.precision(3);
 	//const Eigen::IOFormat npformat(Eigen::StreamPrecision, 0, ", ", ", ", "", "", "[", "]");
 	//std::cout << p.format(npformat) <<endl;
-
 	PyObject* result = PyList_New(0);
 	for (int i = 0; i < p.size(); ++i) {
 		float val = p(i);
@@ -58,10 +58,6 @@ PyObject* RandomForest_predict(RandomForest *rf,DataFrameHandle handle) {
 		//PyList_Append(result,  PyInt_FromLong(i));
 	}
 	return result;
-
-	//vector<int> vec(p.data(), p.data() + p.rows() * p.cols());
-
-	//return vec;
 }
 
 void RandomForest_Free(RandomForest *rf) {

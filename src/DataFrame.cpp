@@ -34,11 +34,16 @@ DataFrame::DataFrame(int a, int b, int c, bool r) :
 
 //empty constructor
 DataFrame::DataFrame() {
+	nrrows=0;
+	nrcols=0;
+	regression=true;
+	classCol=0;
+	cm=0.0;
 }
 
-void DataFrame::setParameters() {
-	cout<<"C: Setting parameters..."<<endl;
-}
+//void DataFrame::setParameters() {
+//	cout<<"C: Setting parameters..."<<endl;
+//}
 
 void DataFrame::printData() {
 	cout << setw(5) << "";
