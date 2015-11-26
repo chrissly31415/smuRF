@@ -82,6 +82,7 @@ void DF_printSummary(DataFrameHandle handle) {
 }
 
 void DF_createFromNumpy(const float *data, int nrow, int ncol, DataFrameHandle* out) {
+	//expects data in row-major i.e. FORTRAN style!
 	DataFrame* df = new DataFrame(nrow, ncol, ncol - 1, true);
 	DataFrame &tmp = *df;
 	tmp.nrrows = nrow;
@@ -100,8 +101,7 @@ void DF_createFromNumpy(const float *data, int nrow, int ncol, DataFrameHandle* 
 			if (i==0) tmp.order.at(j) = j;
 		}
 	}
-	tmp.analyze();
-	//tmp.printData();
+    tmp.analyze();
 	*out = df;
 	//potential memory leak here!!!
 	//delete df;

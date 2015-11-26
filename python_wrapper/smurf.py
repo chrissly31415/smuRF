@@ -30,19 +30,19 @@ def ctypes2numpy(cptr, length, dtype):
 class DF(object):
     def __init__(self, X, label=None):
         self.ptr_ = ctypes.c_void_p()
-        # self.handle = lib.DF_new()
-        # lib.DF_setParameters(self.obj)
-        X = X.astype(np.float32)
+        # We need array as row-major FORTRAN STYLE
+        X = X.astype(np.float32, order='F')
         # print type(self.ptr_)
         if isinstance(X, np.ndarray) and len(X.shape) == 2:
             # attach label to X
             if isinstance(label, np.ndarray) and len(label.shape) == 1:
-                label = label.astype(np.float32)
+                label = label.astype(np.float32, order='F')
                 X = np.append(X, label.reshape(label.shape[0], -1), axis=1)
             lib.DF_createFromNumpy(X.ctypes.data_as(ctypes.POINTER(ctypes.c_float)), X.shape[0], X.shape[1],
                                    ctypes.byref(self.ptr_))
         else:
             print X.shape
+            print X.flags
             print "ERROR: Need numpy matrix...!"
             sys.exit(1)
 
@@ -76,26 +76,26 @@ class RandomForest(BaseEstimator):
     def train(self):
         lib.RandomForest_train(self.obj)
 
-    def fit(self, X, y):
-        if isinstance(X, pd.DataFrame):
-            X = X.values
-        if isinstance(y, pd.Series):
-            y = y.values.astype(np.float32)
+    def fit(self, lX, ly):
+        if isinstance(lX, pd.DataFrame):
+            lX = lX.values
+        if isinstance(ly, pd.Series):
+            ly = ly.values
 
-        X = X.astype(np.float32)
-        y = y.astype(np.float32)
-        df = DF(X, label=y)
+        df = DF(lX, label=ly)
         self.setDataFrame(df)
         lib.RandomForest_train(self.obj)
 
-    def predict(self, X):
-        if isinstance(X, pd.DataFrame):
-            X = X.values
-        df = DF(X)
+    def predict(self, lX):
+        if isinstance(lX, pd.DataFrame):
+            lX = lX.values
+        df = DF(lX)
         length = ctypes.c_ulong()
         preds = lib.RandomForest_predict.restype = ctypes.py_object
         preds = lib.RandomForest_predict(self.obj, df.ptr_)
-        return np.asarray(preds)
+        preds = np.asarray(preds)
+        preds = preds.reshape((preds.shape[0],1))
+        return preds
 
         # def get_params(self,deep):
 
@@ -111,14 +111,14 @@ class RandomForest(BaseEstimator):
         return self
 
 if __name__ == "__main__":
-    # X = pd.read_csv('../data/katritzky_n_small.csv',sep=',')
-    X = pd.read_csv('../data/mp_cdk.csv', sep=',')
+    X = pd.read_csv('../data/katritzky_n_small.csv',sep=',')
+    #X = pd.read_csv('../data/mp_cdk.csv', sep=',')
     X = X._get_numeric_data()
     print X.describe()
-    y = X['Ave °C']
-    # y = X['n_exp']
-    X.drop(['train', 'Ave °C'], axis=1, inplace=True)
-    # X.drop(['train','n_exp'],axis=1,inplace=True)
+    #y = X['Ave °C']
+    y = X['n_exp']
+    #X.drop(['train', 'Ave °C'], axis=1, inplace=True)
+    X.drop(['train','n_exp'],axis=1,inplace=True)
     print X.describe()
     print y.describe()
     model = RandomForest(n_estimators=100, mtry=5, node_size=5, max_depth=30, n_jobs=4)

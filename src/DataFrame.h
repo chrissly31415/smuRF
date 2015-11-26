@@ -23,7 +23,7 @@ struct DataFrame {
 	int classCol;
 	vector<string> header;
 	typedef struct vector<pair<double, int> > VecPairDoubInt;
-	//row major storing saves some time during ordering of the datasets
+	// FORTRAN STYLE row major storing saves some time during ordering of the datasets
 	typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
 			Eigen::RowMajor> MatrixXdcm;
 
