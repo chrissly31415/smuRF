@@ -18,25 +18,27 @@ using namespace std;
 
 struct RandomForest {
 	RandomForest();
-	RandomForest(DataFrame ldf, RandomGen rng, Parameters params);
+	//RandomForest(RandomGen rng, Parameters params);
 	~RandomForest();
 
-	DataFrame dataframe;
+	//DataFrame dataframe;
 	RandomGen rng;
 
 	int nrTrees,mTry,min_node,max_depth,verbose_level,probability,numjobs;
 	double weight,oob_loss;
 	bool entropy_loss;
+	bool regression;
 
 	vector<Tree> trees;
 	vector<int> oobcounter;
 	Eigen::VectorXd poob_all;
 
-	void setParameters(DataFrame ldf, int nrTrees, int mTry, int min_node, int max_depth, int verbose_level, int probability,int numjobs);
-	void setParameters(int nrTrees, int mTry, int min_node, int max_depth, int numjobs,int verbose_level);
-	void setDataFrame(DataFrame &ldf);
+	//void setParameters(DataFrame ldf, int nrTrees, int mTry, int min_node, int max_depth, int verbose_level, int probability,int numjobs);
+	void setParameters(int nrTrees, int mTry, int min_node, int max_depth, int numjobs,int verbose_level,bool regression);
+	//void setDataFrame(DataFrame &ldf);
 
-	void train();
+	void train(DataFrame &trainSet);
+	//void train();
 	Eigen::VectorXd predict(DataFrame &testSet, const bool verbose = false);
 
 	Eigen::VectorXd averageOOB(const Eigen::MatrixXd &pall);

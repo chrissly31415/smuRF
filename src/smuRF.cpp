@@ -116,12 +116,15 @@ void protocol_special(RandomGen rng, Parameters params, DataFrame df0) {
 
 	//TRAIN
 	trainDF.printSummary();
-	RandomForest *myRF = new RandomForest(trainDF, rng, params);
+	RandomForest *myRF = new RandomForest();
+	myRF->setParameters(params.nrtrees[0],params.mtry[0],params.min_nodes,params.max_depth,params.numjobs,params.verbose,params.regression);
+
+	//myRF->setDataFrame(trainDF);
 	myRF->printInfo();
-	myRF->train();
+	myRF->train(trainDF);
 	//LOSS
 	cout << "#Training (out-of-bag):" << endl;
-	LUtils::evaluate(myRF->dataframe, myRF->poob_all, false, 1);
+	LUtils::evaluate(trainDF, myRF->poob_all, false, 1);
 	//LUtils::aucLoss(myRF->dataframe.matrix.col(myRF->dataframe.classCol),
 	//		myRF->poob_all, true);
 
@@ -140,29 +143,28 @@ void showData(RandomGen rng, Parameters params, DataFrame df0) {
 	df0.printSummary();
 }
 
-void test_python(RandomGen rng, Parameters params, DataFrame df0) {
-//	RF *rf = RF_new();
-//	rf->fit(1.0);
-//	double res = rf->predict(2.0);
-}
 
 void simpleRF(RandomGen rng, Parameters params, DataFrame df0) {
-	cout<<"\ntree size:\n"<<params.nrtrees.size();
+	cout<<"\ntree size: "<<params.nrtrees.size();
 	df0.printSummary();
 	map<string, double> results;
 	string min_pos = "";
 	double min_loss = 10e15;
 	for (unsigned i = 0; i < params.nrtrees.size(); i++) {
 		for (unsigned j = 0; j < params.mtry.size(); j++) {
-			RandomForest *myRF = new RandomForest(df0, rng, params);
-			myRF->nrTrees = params.nrtrees[i];
-			myRF->mTry = params.mtry[j];
+			RandomForest *myRF = new RandomForest();
+
+			myRF->setParameters(params.nrtrees[i],params.mtry[j],params.min_nodes,params.max_depth,params.numjobs,params.verbose,params.regression);
+
+			//myRF->setDataFrame(df0);
+			//myRF->nrTrees = params.nrtrees[i];
+			//myRF->mTry = params.mtry[j];
 			myRF->printInfo();
-			myRF->train();
+			myRF->train(df0);
 			double loss = myRF->oob_loss;
 			//save results
 			stringstream info;
-			info << "ntree: " << params.nrtrees[i] << " try_features: "
+			info << "->ntree: " << params.nrtrees[i] << " try_features: "
 					<< params.mtry[j];
 			const std::string& tmp = info.str();
 			results.insert(std::make_pair(tmp, loss));
@@ -238,7 +240,7 @@ void selectProtocol(RandomGen rng, Parameters params) {
 			cout << "Random Forest" << endl;
 			simpleRF(rng, params, df);
 		} else if (params.protocol[i].find("test") != std::string::npos) {
-			test_python(rng, params, df);
+			//
 		} else if (params.protocol[i].find("show") != std::string::npos) {
 			cout << "Show Data" << endl;
 			showData(rng, params, df);

@@ -48,6 +48,7 @@ void Tree::printInfo() {
 void Tree::train(DataFrame &dataframe, const vector<int> &featList,
 		const int nrFeat, const bool verbose) {
 	//select features randomly
+	if (verbose) cout<<"Training tree with random seed:"<<rng.seed<<endl;
 	vector<int> featsubset = LUtils::sample(rng, nrFeat, dataframe.nrcols - 1,
 			false);
 	DataFrame::FeatureResult featResult = dataframe.findBestFeature(featsubset,

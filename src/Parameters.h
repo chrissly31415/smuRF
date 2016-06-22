@@ -28,15 +28,15 @@ struct Parameters {
 		//int mtry;
 		int min_nodes;
 		int max_depth;
-		bool probability;
-		unsigned int seed;
-		Split splitinfo;
 		int iter;
-		bool entropy;
-		double weight;
 		int verbose;
 		int numjobs;
-
+		unsigned int seed;
+		Split splitinfo;
+		bool entropy;
+		bool probability;
+		bool regression;
+		double weight;
 	};
 
 

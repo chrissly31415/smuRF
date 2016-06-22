@@ -760,11 +760,14 @@ struct LUtils {
 			DataFrame trainDF = df.getRows(trainidx, true);
 			cout<<"Train set observations:"<<trainDF.nrrows<<"\n";
 
-			RandomForest myRF(trainDF, rng, params);
-			cout << "Fold " << i + 1 << ": ";
-			myRF.train();
+			RandomForest *myRF = new RandomForest();
+			myRF->setParameters(params.nrtrees[0],params.mtry[0],params.min_nodes,params.max_depth,params.numjobs,params.verbose,params.regression);
 
-			Eigen::VectorXd p = myRF.predict(testDF);
+			//myRF.setDataFrame(trainDF);
+			cout << "Fold " << i + 1 << ": ";
+			myRF->train(df);
+
+			Eigen::VectorXd p = myRF->predict(testDF);
 			loss = loss + LUtils::evaluate(testDF, p, false, false);
 		}
 		cout << endl << "XValdiation Summary:" << endl;

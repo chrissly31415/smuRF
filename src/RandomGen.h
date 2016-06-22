@@ -36,6 +36,7 @@ struct RandomGen
     {
         return boost::uniform_int<int>(0, maxExcluded-1)(rng);
     }
+
 unsigned int seed;
 boost::mt19937 rng;
 };

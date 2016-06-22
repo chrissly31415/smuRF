@@ -49,6 +49,8 @@ Parameters IOHelper::parseParameters(string filename) {
 	boost::regex mtry("try_features\\s*=\\s*([0-9]{0,})", boost::regex::icase);
 	boost::regex maxdepth("max_depth\\s*=\\s*([0-9]{0,})", boost::regex::icase);
 	boost::regex probability("probability", boost::regex::icase);
+	boost::regex regression("regre", boost::regex::icase);
+	boost::regex classification("class", boost::regex::icase);
 	boost::regex seed("seed\\s*=\\s*([0-9]{0,9})", boost::regex::icase);
 	boost::regex numjobs("numjobs\\s*=\\s*([0-9]{0,9})", boost::regex::icase);
 	boost::regex iter("iter\\s*=\\s*([0-9]{0,9})", boost::regex::icase);
@@ -103,6 +105,10 @@ Parameters IOHelper::parseParameters(string filename) {
 				params.protocol.push_back(matches[1]);
 			} else if (boost::regex_search(line, matches, probability)) {
 				params.probability = true;
+			} else if (boost::regex_search(line, matches, regression)) {
+				params.regression = true;
+			} else if (boost::regex_search(line, matches, classification)) {
+				params.regression = false;
 			} else if (boost::regex_search(line, matches, min_node)) {
 				stringstream Str;
 				Str << matches[1];
@@ -151,7 +157,8 @@ Parameters IOHelper::parseParameters(string filename) {
 		}
 	} catch (const std::ifstream::failure &e) {
 		//std::cerr << "Failure opening setup.txt.";
-		std::cout << "Searching for setup.txt in directory: " << LUtils::get_workdir();
+		std::cout << "Searching for setup.txt in directory: "
+				<< LUtils::get_workdir();
 		//exit(1);
 	}
 	myfile.close();

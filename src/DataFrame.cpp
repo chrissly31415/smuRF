@@ -82,6 +82,8 @@ void DataFrame::quick_analyze() {
 DataFrame DataFrame::copy() {
 	DataFrame *newDF = new DataFrame(nrrows, nrcols, classCol, regression);
 	newDF->setHeader(header);
+	//MatrixXdcm x = MatrixXdcm(matrix);
+	//newDF->setMatrix(x);
 	newDF->setMatrix(matrix);
 	newDF->setOrder(order);
 	newDF->setType(type);
@@ -91,6 +93,8 @@ DataFrame DataFrame::copy() {
 	} else {
 		newDF->quick_analyze();
 	}
+	//printf("Copy: Address of old matrix is %p\n", &matrix);
+	//printf("Copy: Address of new matrix is %p\n", &(newDF->matrix));
 	return *newDF;
 }
 
